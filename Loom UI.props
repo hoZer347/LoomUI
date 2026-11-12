@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Import this from a project that links Loom UI. It adds the headers, the
+     library and GLFW, built by "Loom UI.vcxproj". A consumer that is not the Loom
+     editor leaves ExtensionRegistry static; the editor sets LoomUiExport to true
+     before importing, so extension libraries can import it from the executable. -->
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="UserMacros">
+    <LoomUiFolder>$(MSBuildThisFileDirectory)</LoomUiFolder>
+    <LoomUiConfiguration>$(Configuration)</LoomUiConfiguration>
+    <LoomUiConfiguration Condition="'$(Configuration)'!='Debug'">Release</LoomUiConfiguration>
+  </PropertyGroup>
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(LoomUiFolder);$(LoomUiFolder)ImGui;$(LoomUiFolder)External\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions Condition="'$(LoomUiExport)'!='true'">LOOM_UI_STATIC;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ClCompile>
+    <Link>
+      <AdditionalLibraryDirectories>$(LoomUiFolder)Build\$(LoomUiConfiguration);$(LoomUiFolder)External\glfw\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Loom UI.lib;glfw3.lib;opengl32.lib;gdi32.lib;user32.lib;shell32.lib;ole32.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+</Project>
