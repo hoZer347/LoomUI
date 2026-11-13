@@ -2,8 +2,8 @@
 
 #include "imgui.h"
 
-#include <deque>
 #include <functional>
+#include <list>
 #include <string>
 #include <vector>
 
@@ -50,8 +50,9 @@ namespace Loom
 	* - What an extension adds to the editor. A panel docks, tears off and
 	*   shows in the Window menu as the editor's own do, and stays closed
 	*   until the user opens it there. A menu item joins the main menu bar
-	* - Whatever an extension adds while it starts is its own, and leaves with
-	*   it when it unloads; other extensions' and the editor's stay
+	* - Whatever an extension adds, while it starts or later, is its own, and
+	*   leaves with it when it unloads; other extensions' and the editor's stay.
+	*   The owner is the module the call to AddPanel or AddMenuItem came from
 	* - An extension is a shared library in the extensions folder, built with
 	*   LOOM_SCRIPT_MODULE against the editor's import library as scripts are.
 	*   It exports LoomExtensionAbi, LoomExtensionStart and LoomExtensionStop
@@ -97,7 +98,9 @@ namespace Loom
 			std::function<void(const std::string& project)> update = { },
 			std::function<void(const std::vector<std::string>& files)> drop = { });
 
-		static std::deque<Panel>& Panels();
+		// A list, so what one library takes out on unloading moves no other
+		// entry. A pointer to a panel holds until that panel is removed.
+		static std::list<Panel>& Panels();
 
 		// Puts an item in the editor's main menu bar under the top-level menu
 		// named menu, such as "File". select runs when it is clicked. enabled,
@@ -111,6 +114,6 @@ namespace Loom
 			std::function<bool(const std::string& project)> enabled = { },
 			std::function<std::string(const std::string& project)> tooltip = { });
 
-		static std::deque<MenuItem>& MenuItems();
+		static std::list<MenuItem>& MenuItems();
 	};
 };
