@@ -70,6 +70,8 @@
     <ClInclude Include="ExtensionRegistry.h" />
     <ClInclude Include="Files.h" />
     <ClInclude Include="Http.h" />
+    <ClInclude Include="ImageCache.h" />
+    <ClInclude Include="Images.h" />
     <ClInclude Include="KeyedStore.h" />
     <ClInclude Include="LoomProcess.h" />
     <ClInclude Include="TabWindows.h" />
@@ -94,6 +96,8 @@
     <ClCompile Include="ExtensionRegistry.cpp" />
     <ClCompile Include="Files.cpp" />
     <ClCompile Include="Http.cpp" />
+    <ClCompile Include="ImageCache.cpp" />
+    <ClCompile Include="Images.cpp" />
     <ClCompile Include="KeyedStore.cpp" />
     <ClCompile Include="LoomProcess.cpp" />
     <ClCompile Include="TabWindows.cpp" />
