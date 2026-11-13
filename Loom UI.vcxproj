@@ -64,12 +64,14 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ConsoleGuard.h" />
     <ClInclude Include="EditorIcons.h" />
     <ClInclude Include="EditorTheme.h" />
     <ClInclude Include="ExtensionRegistry.h" />
     <ClInclude Include="Files.h" />
     <ClInclude Include="Http.h" />
     <ClInclude Include="KeyedStore.h" />
+    <ClInclude Include="LoomProcess.h" />
     <ClInclude Include="TabWindows.h" />
     <ClInclude Include="Text.h" />
     <ClInclude Include="WindowFrame.h" />
@@ -87,11 +89,13 @@
     <ClInclude Include="ImGui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ConsoleGuard.cpp" />
     <ClCompile Include="EditorTheme.cpp" />
     <ClCompile Include="ExtensionRegistry.cpp" />
     <ClCompile Include="Files.cpp" />
     <ClCompile Include="Http.cpp" />
     <ClCompile Include="KeyedStore.cpp" />
+    <ClCompile Include="LoomProcess.cpp" />
     <ClCompile Include="TabWindows.cpp" />
     <ClCompile Include="Text.cpp" />
     <ClCompile Include="WindowFrame.cpp" />
