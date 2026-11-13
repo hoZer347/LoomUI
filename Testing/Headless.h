@@ -19,9 +19,8 @@ namespace Loom::Testing
 	* - Find, Click, Type, Enter and Leave drive the mouse and keyboard
 	*   through that callback, one frame per event, the way a user would
 	*/
-	class Headless final
+	struct Headless final
 	{
-	public:
 		using Draw = std::function<void()>;
 
 		struct Options final
