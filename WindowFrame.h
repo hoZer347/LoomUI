@@ -1,5 +1,7 @@
 #pragma once
 
+#include "imgui.h"
+
 struct GLFWwindow;
 
 
@@ -50,6 +52,21 @@ namespace Loom
 		const Rect& DragStrip() const { return m_strip; };
 
 		Redraw Redrawing() const { return m_redraw; };
+
+		static constexpr int ButtonCount = 3;
+		static constexpr float ButtonAspect = 1.6f;
+		static constexpr float BarPadding = 1.375f;
+
+		// The width of one window button on a bar this high, and the left edge of the three, which end at the bar's right.
+		static float ButtonWidth(float barHeight) { return barHeight * ButtonAspect; };
+		static float ButtonsLeft(float barRight, float barHeight) { return barRight - ButtonWidth(barHeight) * ButtonCount; };
+
+		// The drag strip, in client coordinates, of a bar from barMin to barMax (screen) whose buttons take its right end and whose left stripLeft is free, in a viewport at origin.
+		static Rect StripFor(ImVec2 barMin, ImVec2 barMax, float stripLeft, ImVec2 origin);
+
+		// Draws minimise, maximise or restore, and close, across the right of a bar in the current ImGui window,
+		// names the drag strip and shows the resizing cursor. True when close is pressed.
+		bool DrawButtons(GLFWwindow* window, ImVec2 barMin, ImVec2 barMax, float stripLeft);
 
 		// The edge or corner under the mouse, for the caller to show its
 		// resizing cursor, which Windows shows by itself.

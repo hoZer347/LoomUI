@@ -1,5 +1,9 @@
 #include "WindowFrame.h"
 
+#include "imgui.h"
+
+#include <GLFW/glfw3.h>
+
 // The title bar comes off on Windows and X11. Wayland keeps its compositor's, and the web test build compiles this too.
 #ifdef _WIN32
 
@@ -526,3 +530,128 @@ namespace Loom
 };
 
 #endif
+
+namespace Loom
+{
+	namespace
+	{
+		constexpr float GLYPH_SIZE = 0.2f;
+		constexpr float GLYPH_OFFSET = 0.5f;
+		constexpr float CENTRED = 0.5f;
+		constexpr ImU32 CLOSE_HOVERED = IM_COL32(196, 43, 28, 255);
+		constexpr ImU32 CLOSE_PRESSED = IM_COL32(148, 32, 21, 255);
+		constexpr ImU32 CLOSE_GLYPH = IM_COL32(255, 255, 255, 255);
+
+		ImGuiMouseCursor ResizeCursor(WindowFrame::Hit hit)
+		{
+			switch (hit)
+			{
+			case WindowFrame::Hit::Left:
+			case WindowFrame::Hit::Right: return ImGuiMouseCursor_ResizeEW;
+			case WindowFrame::Hit::Top:
+			case WindowFrame::Hit::Bottom: return ImGuiMouseCursor_ResizeNS;
+			case WindowFrame::Hit::TopLeft:
+			case WindowFrame::Hit::BottomRight: return ImGuiMouseCursor_ResizeNWSE;
+			case WindowFrame::Hit::TopRight:
+			case WindowFrame::Hit::BottomLeft: return ImGuiMouseCursor_ResizeNESW;
+			default: return ImGuiMouseCursor_None;
+			};
+		};
+	};
+
+	WindowFrame::Rect WindowFrame::StripFor(
+		const ImVec2 barMin,
+		const ImVec2 barMax,
+		const float stripLeft,
+		const ImVec2 origin)
+	{
+		const float height = barMax.y - barMin.y;
+
+		return Rect{ stripLeft - origin.x, barMin.y - origin.y, ButtonsLeft(barMax.x, height) - origin.x, barMax.y - origin.y };
+	};
+
+	bool WindowFrame::DrawButtons(
+		GLFWwindow* const window,
+		const ImVec2 barMin,
+		const ImVec2 barMax,
+		const float stripLeft)
+	{
+		if (!IsInstalled())
+			return false;
+
+		const float height = barMax.y - barMin.y;
+		const float width = ButtonWidth(height);
+		const float buttonsLeft = ButtonsLeft(barMax.x, height);
+
+		SetDragStrip(ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId)
+			? Rect{ }
+			: StripFor(barMin, barMax, stripLeft, ImGui::GetWindowViewport()->Pos));
+
+		if (const ImGuiMouseCursor cursor = ResizeCursor(Hovered()); cursor != ImGuiMouseCursor_None)
+			ImGui::SetMouseCursor(cursor);
+
+		ImDrawList& draw = *ImGui::GetWindowDrawList();
+		const float glyph = height * GLYPH_SIZE;
+		const float offset = glyph * GLYPH_OFFSET;
+		const bool maximized = glfwGetWindowAttrib(window, GLFW_MAXIMIZED);
+		ImVec2 center{ };
+		ImU32 color = 0;
+
+		const auto button = [&width, &barMin, &color, &height, &barMax, &center, &draw, &buttonsLeft](
+			int index,
+			const char* id,
+			ImU32 hovered,
+			ImU32 pressed) -> bool
+		{
+			const ImVec2 corner(buttonsLeft + width * index, barMin.y);
+
+			ImGui::SetCursorScreenPos(corner);
+
+			const bool clicked = ImGui::InvisibleButton(id, ImVec2(width, height));
+
+			center = ImVec2(corner.x + width * CENTRED, corner.y + height * CENTRED);
+			color = ImGui::GetColorU32(ImGuiCol_Text);
+
+			if (ImGui::IsItemHovered())
+				draw.AddRectFilled(corner, ImVec2(corner.x + width, barMax.y), ImGui::IsItemActive() ? pressed : hovered);
+
+			return clicked;
+		};
+
+		draw.PushClipRect(barMin, barMax, false);
+
+		if (button(0, "##Minimize", ImGui::GetColorU32(ImGuiCol_HeaderHovered), ImGui::GetColorU32(ImGuiCol_HeaderActive)))
+			glfwIconifyWindow(window);
+
+		draw.AddLine(ImVec2(center.x - glyph, center.y), ImVec2(center.x + glyph, center.y), color);
+
+		if (button(1, "##Maximize", ImGui::GetColorU32(ImGuiCol_HeaderHovered), ImGui::GetColorU32(ImGuiCol_HeaderActive)))
+		{
+			if (maximized)
+				glfwRestoreWindow(window);
+			else glfwMaximizeWindow(window);
+		};
+
+		if (maximized)
+		{
+			draw.AddRect(ImVec2(center.x - glyph, center.y - glyph + offset), ImVec2(center.x + glyph - offset, center.y + glyph), color);
+			draw.AddLine(ImVec2(center.x - glyph + offset, center.y - glyph + offset), ImVec2(center.x - glyph + offset, center.y - glyph), color);
+			draw.AddLine(ImVec2(center.x - glyph + offset, center.y - glyph), ImVec2(center.x + glyph, center.y - glyph), color);
+			draw.AddLine(ImVec2(center.x + glyph, center.y - glyph), ImVec2(center.x + glyph, center.y + glyph - offset), color);
+			draw.AddLine(ImVec2(center.x + glyph, center.y + glyph - offset), ImVec2(center.x + glyph - offset, center.y + glyph - offset), color);
+		}
+		else draw.AddRect(ImVec2(center.x - glyph, center.y - glyph), ImVec2(center.x + glyph, center.y + glyph), color);
+
+		const bool close = button(2, "##Close", CLOSE_HOVERED, CLOSE_PRESSED);
+
+		if (ImGui::IsItemHovered())
+			color = CLOSE_GLYPH;
+
+		draw.AddLine(ImVec2(center.x - glyph, center.y - glyph), ImVec2(center.x + glyph, center.y + glyph), color);
+		draw.AddLine(ImVec2(center.x - glyph, center.y + glyph), ImVec2(center.x + glyph, center.y - glyph), color);
+
+		draw.PopClipRect();
+
+		return close;
+	};
+};
