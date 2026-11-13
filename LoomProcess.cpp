@@ -109,11 +109,11 @@ namespace Loom
 
 			if (CreateProcessW(
 				executable.c_str(), line.data(), nullptr, nullptr, FALSE,
-				CREATE_NO_WINDOW | CREATE_BREAKAWAY_FROM_JOB, nullptr, folder.c_str(), &startup, &process))
+				CREATE_NO_WINDOW | CREATE_BREAKAWAY_FROM_JOB, nullptr, folder.empty() ? nullptr : folder.c_str(), &startup, &process))
 				return true;
 
 			return GetLastError() == ERROR_ACCESS_DENIED && CreateProcessW(
-				executable.c_str(), line.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, folder.c_str(), &startup, &process);
+				executable.c_str(), line.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, folder.empty() ? nullptr : folder.c_str(), &startup, &process);
 		};
 	};
 
