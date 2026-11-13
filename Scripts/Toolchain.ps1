@@ -3,9 +3,11 @@
 # clang-cl comes from -LlvmFolder (an LLVM folder or its bin), then Visual Studio's own
 # LLVM, then PATH, then the newest %LOCALAPPDATA%\llvm-*\bin. Without one, it warns and returns 'msvc'.
 
+$script:VisualStudioInstaller = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer'
+
 function Find-VisualStudio
 {
-    $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+    $vswhere = Join-Path $script:VisualStudioInstaller 'vswhere.exe'
     if (Test-Path $vswhere)
     {
         $found = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
@@ -63,6 +65,7 @@ function Enter-Toolchain([ValidateSet('clang', 'msvc')] [string] $Compiler = 'cl
 {
     $visualStudio = Find-VisualStudio
 
+    Add-ToPath $script:VisualStudioInstaller 'vswhere.exe'
     Import-Module (Join-Path $visualStudio 'Common7\Tools\Microsoft.VisualStudio.DevShell.dll')
     Enter-VsDevShell -VsInstallPath $visualStudio -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64' | Out-Null
     $global:ErrorActionPreference = 'Stop'
