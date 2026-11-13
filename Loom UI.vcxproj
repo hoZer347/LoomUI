@@ -79,6 +79,7 @@
     <ClInclude Include="TabWindows.h" />
     <ClInclude Include="Text.h" />
     <ClInclude Include="TextLayout.h" />
+    <ClInclude Include="Widgets.h" />
     <ClInclude Include="WindowFrame.h" />
     <ClInclude Include="ImGui\ImGuiAutoscroll.h" />
     <ClInclude Include="ImGui\ImGuiItemHooks.h" />
@@ -108,6 +109,7 @@
     <ClCompile Include="TabWindows.cpp" />
     <ClCompile Include="Text.cpp" />
     <ClCompile Include="TextLayout.cpp" />
+    <ClCompile Include="Widgets.cpp" />
     <ClCompile Include="WindowFrame.cpp" />
     <ClCompile Include="ImGui\ImGuiAutoscroll.cpp" />
     <ClCompile Include="ImGui\ImGuiItemHooks.cpp" />

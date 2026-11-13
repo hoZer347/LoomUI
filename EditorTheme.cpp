@@ -1,7 +1,12 @@
 #include "EditorTheme.h"
 
+#include "imgui_internal.h"
+
+#include <algorithm>
+#include <cmath>
 #include <filesystem>
 #include <iostream>
+#include <utility>
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -153,6 +158,100 @@ namespace Loom
 		};
 
 		#pragma endregion
+
+		#pragma region Colour icons
+
+		constexpr const char* IconLoaderName = "Loom colour icon";
+		constexpr int IconChannels = 4;
+		constexpr float IconCentred = 0.5f;
+		constexpr float IconHalves = 2.0f;
+		constexpr float HeatMiddle = 0.5f;
+		constexpr char32_t Utf8LeadByte = 0xF0;
+		constexpr char32_t Utf8TrailByte = 0x80;
+		constexpr char32_t Utf8TrailMask = 0x3F;
+		constexpr int Utf8TrailBits = 6;
+		constexpr int Utf8TrailCount = 3;
+
+		std::vector<EditorTheme::ColourIcon> colourIcons;
+
+		bool IconContains(
+			ImFontAtlas*,
+			ImFontConfig*,
+			const ImWchar codepoint)
+		{
+			return codepoint >= (ImWchar)EditorTheme::ColourIconFirst
+				&& codepoint < (ImWchar)EditorTheme::ColourIconFirst + colourIcons.size();
+		};
+
+		bool LoadIcon(
+			ImFontAtlas* const atlas,
+			ImFontConfig* const source,
+			ImFontBaked* const baked,
+			void*,
+			const ImWchar codepoint,
+			ImFontGlyph* const glyph,
+			float* const advance)
+		{
+			if (!IconContains(atlas, source, codepoint))
+				return false;
+
+			const EditorTheme::ColourIcon& icon = colourIcons[(size_t)(codepoint - (ImWchar)EditorTheme::ColourIconFirst)];
+			const int scale = EditorTheme::ColourIconMagnification(baked->Size, EditorTheme::DefaultFontSize);
+			const float width = (float)(icon.width * scale);
+
+			if (advance != nullptr)
+			{
+				*advance = width;
+				return true;
+			};
+
+			const EditorTheme::ColourIcon scaled = EditorTheme::ColourIconScaled(icon, scale);
+			const ImFontAtlasRectId pack = ImFontAtlasPackAddRect(atlas, scaled.width, scaled.height);
+
+			if (pack == ImFontAtlasRectId_Invalid)
+				return false;
+
+			const float top = EditorTheme::ColourIconTop(baked->Size, (float)scaled.height);
+
+			glyph->Codepoint = codepoint;
+			glyph->AdvanceX = width;
+			glyph->X0 = 0.0f;
+			glyph->Y0 = top;
+			glyph->X1 = width;
+			glyph->Y1 = top + (float)scaled.height;
+			glyph->Visible = true;
+			glyph->Colored = true;
+			glyph->PackId = pack;
+
+			ImFontAtlasBakedSetFontGlyphBitmap(
+				atlas,
+				baked,
+				source,
+				glyph,
+				ImFontAtlasPackGetRect(atlas, pack),
+				scaled.rgba.data(),
+				ImTextureFormat_RGBA32,
+				scaled.width * IconChannels);
+
+			return true;
+		};
+
+		const ImFontLoader& IconLoader()
+		{
+			static const ImFontLoader loader = []
+			{
+				ImFontLoader made;
+				made.Name = IconLoaderName;
+				made.FontSrcContainsGlyph = IconContains;
+				made.FontBakedLoadGlyph = LoadIcon;
+
+				return made;
+			}();
+
+			return loader;
+		};
+
+		#pragma endregion
 	};
 
 	#pragma region Fonts
@@ -218,6 +317,149 @@ namespace Loom
 	ImFont* EditorTheme::CodeFont()
 	{
 		return codeFont;
+	};
+
+	#pragma endregion
+
+	#pragma region Colour icons
+
+	void EditorTheme::SetColourIcons(std::vector<ColourIcon> icons)
+	{
+		colourIcons = std::move(icons);
+	};
+
+	std::string EditorTheme::ColourIconText(const int index)
+	{
+		const char32_t codepoint = ColourIconFirst + (char32_t)(std::max)(index, 0);
+		std::string text(1, (char)(Utf8LeadByte | (codepoint >> (Utf8TrailBits * Utf8TrailCount))));
+
+		for (int trail = Utf8TrailCount - 1; trail >= 0; --trail)
+			text += (char)(Utf8TrailByte | ((codepoint >> (Utf8TrailBits * trail)) & Utf8TrailMask));
+
+		return text;
+	};
+
+	bool EditorTheme::AddColourIcons(ImFont& font)
+	{
+		if (colourIcons.empty())
+			return false;
+
+		ImFontConfig config;
+		config.MergeMode = true;
+		config.DstFont = &font;
+		config.FontLoader = &IconLoader();
+
+		return ImGui::GetIO().Fonts->AddFont(&config) != nullptr;
+	};
+
+	bool EditorTheme::HasColourIcons(const ImFont& font)
+	{
+		for (const ImFontConfig* const source : font.Sources)
+			if (source->FontLoader == &IconLoader())
+				return true;
+
+		return false;
+	};
+
+	void EditorTheme::RemoveColourIcons(ImFont& font)
+	{
+		ImFontAtlas* const atlas = font.OwnerAtlas;
+
+		if (atlas == nullptr)
+			return;
+
+		ImFontAtlasFontDestroyOutput(atlas, &font);
+
+		for (int index = 0; index < atlas->Sources.Size; ++index)
+		{
+			ImFontConfig& source = atlas->Sources[index];
+
+			if (source.DstFont != &font || source.FontLoader != &IconLoader())
+				continue;
+
+			ImFontAtlasFontDestroySourceData(atlas, &source);
+			atlas->Sources.erase(&source);
+			--index;
+		};
+
+		ImFontAtlasBuildUpdatePointers(atlas);
+		ImFontAtlasFontInitOutput(atlas, &font);
+	};
+
+	int EditorTheme::ColourIconMagnification(
+		const float fontSize,
+		const float defaultFontSize)
+	{
+		return (std::max)(1, (int)(fontSize / defaultFontSize));
+	};
+
+	float EditorTheme::ColourIconTop(
+		const float fontSize,
+		const float glyphHeight)
+	{
+		return std::floor((fontSize - glyphHeight) * IconCentred);
+	};
+
+	float EditorTheme::ColourIconRowHeight(
+		const int tallest,
+		const int magnification)
+	{
+		return (float)(tallest * magnification) + ColourIconRowGap * IconHalves;
+	};
+
+	float EditorTheme::ColourIconCentre(
+		const int outer,
+		const int inner,
+		const int magnification)
+	{
+		return std::floor((float)((outer - inner) * magnification) * IconCentred);
+	};
+
+	float EditorTheme::ColourIconTabPadding(
+		const float fontSize,
+		const int tallest,
+		const int magnification,
+		const float minimum)
+	{
+		const float top = ColourIconTop(fontSize, (float)(tallest * magnification));
+
+		return (std::max)(minimum, ColourIconGap - top);
+	};
+
+	float EditorTheme::ColourIconMenuSpacing(
+		const float fontSize,
+		const int tallest,
+		const int magnification,
+		const float minimum)
+	{
+		const float top = ColourIconTop(fontSize, (float)(tallest * magnification));
+		const float selectable = std::ceil(-top + ColourIconRowGap) * IconHalves;
+
+		return (std::max)({ minimum, ColourIconRowHeight(tallest, magnification) - fontSize, selectable });
+	};
+
+	EditorTheme::ColourIcon EditorTheme::ColourIconScaled(
+		const ColourIcon& icon,
+		const int scale)
+	{
+		const size_t factor = (size_t)(std::max)(1, scale);
+		const size_t width = (size_t)icon.width * factor;
+		const size_t height = (size_t)icon.height * factor;
+		const size_t channels = (size_t)IconChannels;
+
+		ColourIcon scaled;
+		scaled.width = (int)width;
+		scaled.height = (int)height;
+		scaled.rgba.resize(width * height * channels);
+
+		for (size_t y = 0; y < height; ++y)
+			for (size_t x = 0; x < width; ++x)
+				std::copy_n(
+					icon.rgba.begin() + ((y / factor) * (size_t)icon.width + x / factor) * channels,
+					channels,
+					scaled.rgba.begin() + (y * width + x) * channels);
+
+		return scaled;
 	};
 
 	#pragma endregion
@@ -336,6 +578,29 @@ namespace Loom
 		colours[ImGuiCol_NavWindowingHighlight] = Accent;
 		colours[ImGuiCol_NavWindowingDimBg] = Dimmer;
 		colours[ImGuiCol_ModalWindowDimBg] = Dimmer;
+	};
+
+	ImVec4 EditorTheme::Mix(
+		const ImVec4& from,
+		const ImVec4& to,
+		const float share)
+	{
+		return {
+			from.x + (to.x - from.x) * share,
+			from.y + (to.y - from.y) * share,
+			from.z + (to.z - from.z) * share,
+			1 };
+	};
+
+	ImVec4 EditorTheme::HeatTone(
+		const float heat,
+		const ImVec4& cool,
+		const ImVec4& warm,
+		const ImVec4& hot)
+	{
+		return heat < HeatMiddle
+			? Mix(cool, warm, heat / HeatMiddle)
+			: Mix(warm, hot, (heat - HeatMiddle) / HeatMiddle);
 	};
 
 	#pragma endregion
