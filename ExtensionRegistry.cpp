@@ -93,42 +93,6 @@ namespace Loom
 		return panels;
 	};
 
-	std::string ExtensionRegistry::Title(
-		const std::string& icon,
-		const std::string& label,
-		const std::string& id)
-	{
-		return icon + " " + label + TitleMarker + id;
-	};
-
-	std::string_view ExtensionRegistry::PanelId(const std::string& title)
-	{
-		const size_t marker = title.rfind(TitleMarker);
-
-		return marker == std::string::npos ? std::string_view(title) : std::string_view(title).substr(marker + std::strlen(TitleMarker));
-	};
-
-	bool ExtensionRegistry::Named(
-		const Panel& panel,
-		const std::string& id)
-	{
-		return panel.title.ends_with(TitleMarker + id);
-	};
-
-	void ExtensionRegistry::Retitle(
-		Panel& panel,
-		std::string title)
-	{
-		if (panel.title != title)
-			panel.title = std::move(title);
-	};
-
-	void ExtensionRegistry::Focus(Panel& panel)
-	{
-		panel.shown = true;
-		ImGui::SetWindowFocus(panel.title.c_str());
-	};
-
 	void ExtensionRegistry::AddPanelSettings(const char* const typeName)
 	{
 		ImGuiSettingsHandler handler;
@@ -173,21 +137,6 @@ namespace Loom
 		};
 
 		ImGui::AddSettingsHandler(&handler);
-	};
-
-	void ExtensionRegistry::DrawWindowItems(const float itemSpacingY)
-	{
-		const ImVec2 spacing = ImGui::GetStyle().ItemSpacing;
-
-		if (itemSpacingY > 0.0f)
-			ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(spacing.x, itemSpacingY));
-
-		for (Panel& panel : Panels())
-			if (Listed(panel))
-				ImGui::MenuItem(panel.title.c_str(), nullptr, &panel.shown);
-
-		if (itemSpacingY > 0.0f)
-			ImGui::PopStyleVar();
 	};
 
 	void ExtensionRegistry::DrawAll(
