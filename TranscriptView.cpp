@@ -87,6 +87,8 @@ namespace Loom
 		};
 	};
 
+	#pragma region Layout
+
 	ImVec2 TranscriptView::Fit(const ImageCache::Entry& entry, ImVec2 space)
 	{
 		const float scale = Images::Scale((float)entry.width, (float)entry.height, space.x, space.y);
@@ -189,6 +191,10 @@ namespace Loom
 			if (!ImagesOf(source.At(index)).empty() || std::ranges::any_of(m_laid[index].paragraphs, IsFigure))
 				m_laid[index].width = -1;
 	};
+
+	#pragma endregion
+
+	#pragma region Selection
 
 	std::pair<size_t, size_t> TranscriptView::SelectedIn(size_t index, Part part, size_t size) const
 	{
@@ -367,6 +373,10 @@ namespace Loom
 			ImGui::EndPopup();
 		};
 	};
+
+	#pragma endregion
+
+	#pragma region Drawing
 
 	void TranscriptView::DrawLayout(
 		const Layout& layout,
@@ -595,4 +605,6 @@ namespace Loom
 
 		ImGui::EndChild();
 	};
+
+	#pragma endregion
 };
