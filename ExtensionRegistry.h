@@ -5,6 +5,7 @@
 #include <functional>
 #include <list>
 #include <string>
+#include <string_view>
 #include <vector>
 
 
@@ -75,6 +76,7 @@ namespace Loom
 			std::function<void(const std::vector<std::string>& files)> drop;
 			bool shown = false;
 			const void* owner = nullptr;
+			bool listed = true;
 		};
 
 		struct MenuItem
@@ -115,5 +117,50 @@ namespace Loom
 			std::function<std::string(const std::string& project)> tooltip = { });
 
 		static std::list<MenuItem>& MenuItems();
+
+		// A panel's title is its shown text, then ### and its id. ImGui keeps the
+		// window's place and size under the id, so the text can change at will.
+		static constexpr const char* TitleMarker = "###";
+
+		static std::string Title(
+			const std::string& icon,
+			const std::string& label,
+			const std::string& id);
+
+		// What follows the last ### of a title, or the whole title when it has none.
+		static std::string_view PanelId(const std::string& title);
+
+		// Whether the panel's id is id.
+		static bool Named(
+			const Panel& panel,
+			const std::string& id);
+
+		// Gives the panel a new shown text under its id; nothing when it is the same.
+		static void Retitle(
+			Panel& panel,
+			std::string title);
+
+		// Shows the panel and focuses its window.
+		static void Focus(Panel& panel);
+
+		// Whether a panel is a Window menu item and keeps its shown state in the layout file. Set listed to false on one that opens and closes by itself.
+		static bool Listed(const Panel& panel) { return panel.listed; };
+
+		// Keeps each listed panel's shown state in the layout file as [typeName][Panels], one id=0 or 1 a line.
+		// typeName must outlive the ImGui context.
+		static void AddPanelSettings(const char* typeName);
+
+		// One Window menu item per listed panel. A positive itemSpacingY is the row spacing the items take, which a title starting with an icon may need.
+		static void DrawWindowItems(float itemSpacingY = 0.0f);
+
+		// Shows how a panel's window opens. tall is whether the window is docked, or not made yet, and so takes a tall tab bar.
+		using Pad = std::function<void(bool tall, const std::function<void()>& submit)>;
+
+		// Each frame: every panel's update, then the shown panels between Begin and End, each given the project,
+		// and files dropped from outside handed to the panel they were dropped on. dropped is empty after.
+		static void DrawAll(
+			const std::string& project,
+			std::vector<std::string>& dropped,
+			const Pad& pad = { });
 	};
 };
