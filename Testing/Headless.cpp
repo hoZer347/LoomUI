@@ -27,6 +27,17 @@ namespace Loom::Testing
 		io.DisplaySize = options.display;
 		io.DeltaTime = options.frameSeconds;
 
+		ImGuiPlatformIO& platform = ImGui::GetPlatformIO();
+		platform.Platform_ClipboardUserData = &m_clipboard;
+		platform.Platform_SetClipboardTextFn = [](ImGuiContext* context, const char* text)
+		{
+			*(std::string*)context->PlatformIO.Platform_ClipboardUserData = text;
+		};
+		platform.Platform_GetClipboardTextFn = [](ImGuiContext* context)
+		{
+			return ((std::string*)context->PlatformIO.Platform_ClipboardUserData)->c_str();
+		};
+
 		if (!options.buildFonts)
 			return;
 
@@ -44,6 +55,11 @@ namespace Loom::Testing
 	ImGuiContext* Headless::Context() const
 	{
 		return m_context;
+	};
+
+	std::string& Headless::Clipboard() const
+	{
+		return m_clipboard;
 	};
 
 	ImVec2 Headless::Display() const

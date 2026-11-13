@@ -13,7 +13,7 @@ namespace Loom::Testing
 	* Loom::Testing::Headless
 	* - A Dear ImGui context with no window behind it, for tests: a display of
 	*   a fixed size, no ini file and a built font atlas
-	* - Owns the context and makes it current
+	* - Owns the context and makes it current, and keeps its clipboard in a string
 	* - Frame runs one frame around a draw callback, Window runs one inside a
 	*   full-display window with no title bar
 	* - Find, Click, Type, Enter and Leave drive the mouse and keyboard
@@ -40,6 +40,9 @@ namespace Loom::Testing
 		Headless& operator=(const Headless&) = delete;
 
 		ImGuiContext* Context() const;
+
+		// What the context copies to and pastes from, in place of the system clipboard.
+		std::string& Clipboard() const;
 		ImVec2 Display() const;
 
 		void Frame(const Draw& draw) const;
@@ -85,5 +88,6 @@ namespace Loom::Testing
 	private:
 		ImGuiContext* const m_context;
 		const ImVec2 m_display;
+		mutable std::string m_clipboard;
 	};
 };
