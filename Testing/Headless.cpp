@@ -22,6 +22,7 @@ namespace Loom::Testing
 		ImGui::SetCurrentContext(m_context);
 		ImGuiIO& io = ImGui::GetIO();
 		io.BackendFlags |= options.backend;
+		io.ConfigFlags |= options.config;
 		io.IniFilename = nullptr;
 		io.DisplaySize = options.display;
 		io.DeltaTime = options.frameSeconds;

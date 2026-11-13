@@ -30,6 +30,7 @@ namespace Loom::Testing
 			float frameSeconds = 1.0f / 60;
 			ImGuiBackendFlags backend = 0;
 			bool buildFonts = true;
+			ImGuiConfigFlags config = 0;
 		};
 
 		Headless();
