@@ -1,5 +1,7 @@
 #include "LoomProcess.h"
 
+#include "Text.h"
+
 #include <algorithm>
 #include <array>
 #include <system_error>
@@ -90,15 +92,6 @@ namespace Loom
 			CloseHandle(process);
 
 			return same;
-		};
-
-		std::wstring Wide(std::string_view text)
-		{
-			const int length = MultiByteToWideChar(CP_UTF8, 0, text.data(), (int)text.size(), nullptr, 0);
-			std::wstring wide((size_t)length, L'\0');
-			MultiByteToWideChar(CP_UTF8, 0, text.data(), (int)text.size(), wide.data(), length);
-
-			return wide;
 		};
 
 		bool CreateHidden(
@@ -350,7 +343,7 @@ namespace Loom
 		for (const std::string& argument : arguments)
 		{
 			line += L' ';
-			AppendQuoted(line, Wide(argument));
+			AppendQuoted(line, Text::Wide(argument));
 		};
 
 		PROCESS_INFORMATION process{ };
