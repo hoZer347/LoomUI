@@ -712,9 +712,14 @@ namespace Loom
 		GiveIcon(window, ICON_SMALL, GetSystemMetricsForDpi(SM_CXSMICON, dpi));
 	};
 #else
+	namespace
+	{
+		constexpr int DEFAULT_DPI = 96;
+	};
+
 	int WindowFrame::IconSide(const unsigned dpi)
 	{
-		return IconBaseSide * (int)dpi / 96;
+		return IconBaseSide * (int)dpi / DEFAULT_DPI;
 	};
 
 	void WindowFrame::SetIcon(void*)
