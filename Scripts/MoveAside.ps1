@@ -1,5 +1,5 @@
 # Move-LockedAside: renames an exe that cannot be opened for writing, such as a running one, to
-# <name> <guid>.replaced beside it, so build.ps1 can link over its path. Remove-Replaced deletes
+# <name> <guid>.replaced beside it, so a build can link over its path. Remove-Replaced deletes
 # the ones no longer running. Dot-source it.
 
 function Remove-Replaced
