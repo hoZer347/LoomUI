@@ -1,10 +1,11 @@
 #include "TextLayout.h"
 
+#include "Images.h"
+
 #include <algorithm>
 #include <cctype>
 #include <charconv>
 #include <cmath>
-#include <filesystem>
 #include <string>
 #include <string_view>
 
@@ -27,7 +28,6 @@ namespace Loom::TextLayout
 		constexpr unsigned char three_byte_lead = 0xE0;
 		constexpr unsigned char four_byte_lead = 0xF0;
 
-		constexpr std::string_view image_extensions[] = { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp" };
 
 		constexpr float blank_line = 0.5f;
 
@@ -133,17 +133,6 @@ namespace Loom::TextLayout
 			size_t end = 0;
 		};
 
-		bool IsImageFile(std::string_view path)
-		{
-			const std::u8string name(path.begin(), path.end());
-			const std::u8string extension = std::filesystem::path(name).extension().u8string();
-			std::string lowered(extension.begin(), extension.end());
-
-			std::ranges::transform(lowered, lowered.begin(), [](unsigned char letter) { return (char)std::tolower(letter); });
-
-			return std::ranges::find(image_extensions, std::string_view(lowered)) != std::end(image_extensions);
-		};
-
 		bool IsAbsolute(std::string_view path)
 		{
 			constexpr size_t drive_length = 3;
@@ -196,7 +185,7 @@ namespace Loom::TextLayout
 
 				const std::string path = FigureFile(text.substr(pathBegin, pathEnd - pathBegin));
 
-				if (IsAbsolute(path) && IsImageFile(path))
+				if (IsAbsolute(path) && Images::IsImageFile(path))
 				{
 					figure = { at, pathBegin, pathEnd, close + 1 };
 					return true;
