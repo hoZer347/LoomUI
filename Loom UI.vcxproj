@@ -64,10 +64,13 @@
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ChatInput.h" />
     <ClInclude Include="EditorIcons.h" />
     <ClInclude Include="EditorTheme.h" />
     <ClInclude Include="ExtensionRegistry.h" />
+    <ClInclude Include="LayoutIni.h" />
     <ClInclude Include="TabWindows.h" />
+    <ClInclude Include="TextLayout.h" />
     <ClInclude Include="WindowFrame.h" />
     <ClInclude Include="ImGui\ImGuiAutoscroll.h" />
     <ClInclude Include="ImGui\ImGuiItemHooks.h" />
@@ -83,9 +86,12 @@
     <ClInclude Include="ImGui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ChatInput.cpp" />
     <ClCompile Include="EditorTheme.cpp" />
     <ClCompile Include="ExtensionRegistry.cpp" />
+    <ClCompile Include="LayoutIni.cpp" />
     <ClCompile Include="TabWindows.cpp" />
+    <ClCompile Include="TextLayout.cpp" />
     <ClCompile Include="WindowFrame.cpp" />
     <ClCompile Include="ImGui\ImGuiAutoscroll.cpp" />
     <ClCompile Include="ImGui\ImGuiItemHooks.cpp" />
