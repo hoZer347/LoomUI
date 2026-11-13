@@ -11151,7 +11151,8 @@ void ImGui::TabItemLabelAndCloseButton(ImDrawList* draw_list, const ImRect& bb, 
         }
     }
     LogSetNextTextDecoration("/", "\\");
-    RenderTextEllipsis(draw_list, text_ellipsis_clip_bb.Min, text_ellipsis_clip_bb.Max, ellipsis_max_x, label, label_end, &label_size);
+    const ImRect text_clip_bb(text_ellipsis_clip_bb.Min.x, bb.Min.y, text_ellipsis_clip_bb.Max.x, bb.Max.y);
+    RenderTextEllipsis(draw_list, text_ellipsis_clip_bb.Min, text_ellipsis_clip_bb.Max, ellipsis_max_x, label, label_end, &label_size, &text_clip_bb);
 
 #if 0
     if (!is_contents_visible)
