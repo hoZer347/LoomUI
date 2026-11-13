@@ -38,9 +38,6 @@ namespace Loom::Images
 		Jpeg,
 	};
 
-	std::filesystem::path Utf8Path(std::string_view text);
-	std::string PathUtf8(const std::filesystem::path& path);
-
 	bool IsImageFile(std::string_view path);
 	float Scale(float width, float height, float spaceWidth, float spaceHeight);
 

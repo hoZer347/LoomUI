@@ -1,5 +1,7 @@
 #include "ImageCache.h"
 
+#include "Text.h"
+
 #include "imgui.h"
 #include "imgui_internal.h"
 
@@ -147,7 +149,7 @@ namespace Loom
 			return finished;
 		};
 
-		const std::filesystem::path file = Images::Utf8Path(finished.path);
+		const std::filesystem::path file = Text::Utf8Path(finished.path);
 
 		finished.loaded = job.decode
 			? Images::Decode(file, texture_side, finished.pixels, finished.error)

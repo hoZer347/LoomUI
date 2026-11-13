@@ -1,5 +1,7 @@
 #include "Images.h"
 
+#include "Text.h"
+
 #define WIN32_LEAN_AND_MEAN
 #define NOMINMAX
 #include <windows.h>
@@ -214,21 +216,9 @@ namespace Loom::Images
 		#pragma endregion
 	};
 
-	std::filesystem::path Utf8Path(std::string_view text)
-	{
-		return std::filesystem::path(std::u8string_view((const char8_t*)text.data(), text.size()));
-	};
-
-	std::string PathUtf8(const std::filesystem::path& path)
-	{
-		const std::u8string text = path.u8string();
-
-		return std::string((const char*)text.data(), text.size());
-	};
-
 	bool IsImageFile(std::string_view path)
 	{
-		std::string extension = PathUtf8(Utf8Path(path).extension());
+		std::string extension = Text::PathUtf8(Text::Utf8Path(path).extension());
 		std::ranges::transform(extension, extension.begin(), [](unsigned char letter) { return (char)std::tolower(letter); });
 
 		return std::ranges::find(image_extensions, std::string_view(extension)) != std::end(image_extensions);
@@ -355,13 +345,13 @@ namespace Loom::Images
 
 		if (code)
 		{
-			error = "Image not found: " + PathUtf8(file.filename());
+			error = "Image not found: " + Text::PathUtf8(file.filename());
 			return false;
 		};
 
 		if (size > read_limit)
 		{
-			error = "Image too large to read: " + PathUtf8(file.filename());
+			error = "Image too large to read: " + Text::PathUtf8(file.filename());
 			return false;
 		};
 
@@ -370,7 +360,7 @@ namespace Loom::Images
 
 		if (bytes.size() != size)
 		{
-			error = "Image could not be read: " + PathUtf8(file.filename());
+			error = "Image could not be read: " + Text::PathUtf8(file.filename());
 			return false;
 		};
 
@@ -391,7 +381,7 @@ namespace Loom::Images
 		if (frame && Convert(*factory.Get(), frame.Get(), side, pixels))
 			return true;
 
-		error = "Not an image: " + PathUtf8(file.filename());
+		error = "Not an image: " + Text::PathUtf8(file.filename());
 
 		return false;
 	};
@@ -437,7 +427,7 @@ namespace Loom::Images
 
 		if (!std::filesystem::exists(file, code))
 		{
-			error = "Image not found: " + PathUtf8(file.filename());
+			error = "Image not found: " + Text::PathUtf8(file.filename());
 			return false;
 		};
 
@@ -454,7 +444,7 @@ namespace Loom::Images
 			FAILED(decoder->GetFrame(0, &frame)) ||
 			FAILED(frame->GetSize(&wide, &high)))
 		{
-			error = "Not an image: " + PathUtf8(file.filename());
+			error = "Not an image: " + Text::PathUtf8(file.filename());
 			return false;
 		};
 
@@ -498,7 +488,7 @@ namespace Loom::Images
 			{
 				std::wstring path(DragQueryFileW(files, index, nullptr, 0), L'\0');
 				DragQueryFileW(files, index, path.data(), (UINT)path.size() + 1);
-				images.files.push_back(PathUtf8(path));
+				images.files.push_back(Text::PathUtf8(path));
 			};
 		};
 
@@ -529,18 +519,18 @@ namespace Loom::Images
 		size_t at = wcslen(buffer.c_str()) + 1;
 
 		if (buffer[at] == L'\0')
-			return { PathUtf8(first) };
+			return { Text::PathUtf8(first) };
 
 		std::vector<std::string> picked;
 
 		for (; buffer[at] != L'\0'; at += wcslen(buffer.c_str() + at) + 1)
-			picked.push_back(PathUtf8(first / std::filesystem::path(buffer.c_str() + at)));
+			picked.push_back(Text::PathUtf8(first / std::filesystem::path(buffer.c_str() + at)));
 
 		return picked;
 	};
 
 	void Open(const std::string& path)
 	{
-		ShellExecuteW(nullptr, L"open", Utf8Path(path).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+		ShellExecuteW(nullptr, L"open", Text::Utf8Path(path).c_str(), nullptr, nullptr, SW_SHOWNORMAL);
 	};
 };

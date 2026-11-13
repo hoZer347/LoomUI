@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -32,4 +33,8 @@ namespace Loom::Text
 
 	// UTF-8 to UTF-16.
 	std::wstring Wide(std::string_view text);
+
+	// A path read from or written as UTF-8, whatever the code page.
+	std::filesystem::path Utf8Path(std::string_view text);
+	std::string PathUtf8(const std::filesystem::path& path);
 };

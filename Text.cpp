@@ -178,4 +178,16 @@ namespace Loom::Text
 
 		return wide;
 	};
+
+	std::filesystem::path Utf8Path(std::string_view text)
+	{
+		return std::filesystem::path(std::u8string_view((const char8_t*)text.data(), text.size()));
+	};
+
+	std::string PathUtf8(const std::filesystem::path& path)
+	{
+		const std::u8string text = path.u8string();
+
+		return std::string((const char*)text.data(), text.size());
+	};
 };
