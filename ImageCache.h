@@ -18,8 +18,8 @@ namespace Loom
 {
 	/**
 	* Loom::ImageCache
-	* - The images a tab shows. Sizes are read once for laying out, on a thread,
-	*   so a long transcript decodes nothing until it scrolls into view
+	* - The images a window shows. Sizes are read once for laying out, on a thread,
+	*   so a long scrolling list decodes nothing until it scrolls into view
 	* - ImGui's backend does the upload, so this works on either renderer.
 	*   Textures not drawn for a while go, and come back when next drawn
 	* - A key is a file path unless the loader supplies the bytes for it, which it does by returning true
