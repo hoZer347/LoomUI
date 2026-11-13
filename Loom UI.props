@@ -16,7 +16,7 @@
     </ClCompile>
     <Link>
       <AdditionalLibraryDirectories>$(LoomUiFolder)Build\$(LoomUiConfiguration);$(LoomUiFolder)External\glfw\lib-vc2022;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>Loom UI.lib;glfw3.lib;opengl32.lib;gdi32.lib;user32.lib;shell32.lib;ole32.lib;comdlg32.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Loom UI.lib;glfw3.lib;opengl32.lib;gdi32.lib;user32.lib;shell32.lib;ole32.lib;comdlg32.lib;advapi32.lib;winhttp.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
 </Project>

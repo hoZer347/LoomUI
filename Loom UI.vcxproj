@@ -46,7 +46,7 @@
       <ConformanceMode>true</ConformanceMode>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory);$(MSBuildThisFileDirectory)ImGui;$(MSBuildThisFileDirectory)External\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory);$(MSBuildThisFileDirectory)ImGui;$(MSBuildThisFileDirectory)External\glfw\include;$(MSBuildThisFileDirectory)..\External Libraries\json\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -60,14 +60,18 @@
       <ConformanceMode>true</ConformanceMode>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory);$(MSBuildThisFileDirectory)ImGui;$(MSBuildThisFileDirectory)External\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory);$(MSBuildThisFileDirectory)ImGui;$(MSBuildThisFileDirectory)External\glfw\include;$(MSBuildThisFileDirectory)..\External Libraries\json\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="EditorIcons.h" />
     <ClInclude Include="EditorTheme.h" />
     <ClInclude Include="ExtensionRegistry.h" />
+    <ClInclude Include="Files.h" />
+    <ClInclude Include="Http.h" />
+    <ClInclude Include="KeyedStore.h" />
     <ClInclude Include="TabWindows.h" />
+    <ClInclude Include="Text.h" />
     <ClInclude Include="WindowFrame.h" />
     <ClInclude Include="ImGui\ImGuiAutoscroll.h" />
     <ClInclude Include="ImGui\ImGuiItemHooks.h" />
@@ -85,7 +89,11 @@
   <ItemGroup>
     <ClCompile Include="EditorTheme.cpp" />
     <ClCompile Include="ExtensionRegistry.cpp" />
+    <ClCompile Include="Files.cpp" />
+    <ClCompile Include="Http.cpp" />
+    <ClCompile Include="KeyedStore.cpp" />
     <ClCompile Include="TabWindows.cpp" />
+    <ClCompile Include="Text.cpp" />
     <ClCompile Include="WindowFrame.cpp" />
     <ClCompile Include="ImGui\ImGuiAutoscroll.cpp" />
     <ClCompile Include="ImGui\ImGuiItemHooks.cpp" />
