@@ -67,6 +67,7 @@
     <ClInclude Include="EditorIcons.h" />
     <ClInclude Include="EditorTheme.h" />
     <ClInclude Include="ExtensionRegistry.h" />
+    <ClInclude Include="TabWindows.h" />
     <ClInclude Include="WindowFrame.h" />
     <ClInclude Include="ImGui\ImGuiAutoscroll.h" />
     <ClInclude Include="ImGui\ImGuiItemHooks.h" />
@@ -84,6 +85,7 @@
   <ItemGroup>
     <ClCompile Include="EditorTheme.cpp" />
     <ClCompile Include="ExtensionRegistry.cpp" />
+    <ClCompile Include="TabWindows.cpp" />
     <ClCompile Include="WindowFrame.cpp" />
     <ClCompile Include="ImGui\ImGuiAutoscroll.cpp" />
     <ClCompile Include="ImGui\ImGuiItemHooks.cpp" />
