@@ -8,6 +8,7 @@
 #include "imgui_internal.h"
 
 #include <cstdint>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -63,6 +64,13 @@ namespace
 		{
 			font = ImGui::GetIO().Fonts->AddFontDefault();
 			EditorTheme::SetColourIcons(std::move(icons));
+			added = EditorTheme::AddColourIcons(*font);
+		};
+
+		explicit Fixture(EditorTheme::ColourIconSource source)
+		{
+			font = ImGui::GetIO().Fonts->AddFontDefault();
+			EditorTheme::SetColourIconSource(std::move(source));
 			added = EditorTheme::AddColourIcons(*font);
 		};
 
@@ -334,6 +342,77 @@ TEST_SUITE("Loom Icons")
 		CHECK(scaled.width == icon.width);
 		CHECK(scaled.height == icon.height);
 		CHECK(scaled.rgba == icon.rgba);
+	};
+}
+
+#pragma endregion
+
+#pragma region Source
+
+namespace
+{
+	constexpr int unheld = 1;
+	constexpr int unmade = 2;
+
+	// A source over Icons() that does not hold unheld, cannot make unmade, and records every index it makes.
+	EditorTheme::ColourIconSource Recording(std::set<int>& made)
+	{
+		return {
+			(int)Icons().size(),
+			[](const int index) { return index != unheld; },
+			[&made](const int index) -> const EditorTheme::ColourIcon*
+			{
+				made.insert(index);
+
+				return index == unmade ? nullptr : &Icons()[(size_t)index];
+			} };
+	};
+};
+
+TEST_SUITE("Loom Icons")
+{
+	TEST_CASE("a source makes no icon when added, and makes one only when its glyph is first needed")
+	{
+		std::set<int> made;
+		const Fixture fixture(Recording(made));
+		REQUIRE(fixture.added);
+
+		CHECK(made.empty());
+
+		const ImFontGlyph* const glyph = fixture.Find(small_size, Codepoint(0));
+
+		REQUIRE(glyph != nullptr);
+		CHECK(glyph->Colored);
+		CHECK(glyph->AdvanceX == (float)Icons()[0].width);
+		CHECK(made == std::set<int>{ 0 });
+	};
+
+	TEST_CASE("a code point the source does not hold is not a glyph, and is never made")
+	{
+		std::set<int> made;
+		const Fixture fixture(Recording(made));
+		REQUIRE(fixture.added);
+
+		CHECK(fixture.Find(small_size, Codepoint(unheld)) == nullptr);
+		CHECK(made.count(unheld) == 0);
+	};
+
+	TEST_CASE("an icon the source cannot make is not a glyph, and the others still are")
+	{
+		std::set<int> made;
+		const Fixture fixture(Recording(made));
+		REQUIRE(fixture.added);
+
+		CHECK(fixture.Find(small_size, Codepoint(unmade)) == nullptr);
+		CHECK(fixture.Find(small_size, Codepoint(0)) != nullptr);
+	};
+
+	TEST_CASE("a source with no icons is not added")
+	{
+		const Fixture fixture(EditorTheme::ColourIconSource{ });
+
+		CHECK_FALSE(fixture.added);
+		CHECK_FALSE(EditorTheme::HasColourIcons(*fixture.font));
 	};
 }
 

@@ -7,6 +7,7 @@
 #include <cmath>
 #include <filesystem>
 #include <iostream>
+#include <memory>
 #include <utility>
 
 #ifdef _WIN32
@@ -173,7 +174,7 @@ namespace Loom
 		constexpr int Utf8TrailBits = 6;
 		constexpr int Utf8TrailCount = 3;
 
-		std::vector<EditorTheme::ColourIcon> colourIcons;
+		EditorTheme::ColourIconSource colourIcons;
 
 		bool IconContains(
 			ImFontAtlas*,
@@ -181,7 +182,8 @@ namespace Loom
 			const ImWchar codepoint)
 		{
 			return codepoint >= (ImWchar)EditorTheme::ColourIconFirst
-				&& codepoint < (ImWchar)EditorTheme::ColourIconFirst + colourIcons.size();
+				&& codepoint < (ImWchar)EditorTheme::ColourIconFirst + (ImWchar)colourIcons.count
+				&& colourIcons.held((int)(codepoint - (ImWchar)EditorTheme::ColourIconFirst));
 		};
 
 		bool LoadIcon(
@@ -196,7 +198,12 @@ namespace Loom
 			if (!IconContains(atlas, source, codepoint))
 				return false;
 
-			const EditorTheme::ColourIcon& icon = colourIcons[(size_t)(codepoint - (ImWchar)EditorTheme::ColourIconFirst)];
+			const EditorTheme::ColourIcon* const made = colourIcons.icon((int)(codepoint - (ImWchar)EditorTheme::ColourIconFirst));
+
+			if (made == nullptr)
+				return false;
+
+			const EditorTheme::ColourIcon& icon = *made;
 			const int scale = EditorTheme::ColourIconMagnification(baked->Size, EditorTheme::DefaultFontSize);
 			const float width = (float)(icon.width * scale);
 
@@ -326,7 +333,17 @@ namespace Loom
 
 	void EditorTheme::SetColourIcons(std::vector<ColourIcon> icons)
 	{
-		colourIcons = std::move(icons);
+		const auto kept = std::make_shared<const std::vector<ColourIcon>>(std::move(icons));
+
+		SetColourIconSource({
+			(int)kept->size(),
+			[](const int) { return true; },
+			[kept](const int index) { return &(*kept)[(size_t)index]; } });
+	};
+
+	void EditorTheme::SetColourIconSource(ColourIconSource source)
+	{
+		colourIcons = std::move(source);
 	};
 
 	std::string EditorTheme::ColourIconText(const int index)
@@ -342,7 +359,7 @@ namespace Loom
 
 	bool EditorTheme::AddColourIcons(ImFont& font)
 	{
-		if (colourIcons.empty())
+		if (colourIcons.count <= 0)
 			return false;
 
 		ImFontConfig config;

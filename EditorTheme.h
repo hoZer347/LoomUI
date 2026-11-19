@@ -4,6 +4,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -90,6 +91,18 @@ namespace Loom
 
 		// What AddColourIcons merges, replacing the last set. Not between NewFrame and Render.
 		void SetColourIcons(std::vector<ColourIcon> icons);
+
+		// Icons made only when a glyph first needs one: count code points from ColourIconFirst, of which held says which exist,
+		// and icon gives one, null when it cannot be made. Both stay cheap to call again for the same index.
+		struct ColourIconSource final
+		{
+			int count = 0;
+			std::function<bool(int index)> held;
+			std::function<const ColourIcon*(int index)> icon;
+		};
+
+		// What AddColourIcons merges, replacing the last set or source. Not between NewFrame and Render.
+		void SetColourIconSource(ColourIconSource source);
 
 		// The text that draws icon index.
 		std::string ColourIconText(int index);
