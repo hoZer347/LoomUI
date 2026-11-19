@@ -242,6 +242,12 @@ int LoomAppRun(int count, char** arguments)
 		return false;
 	};
 
+	callbacks.wait = [&counts](const double wait)
+	{
+		counts.Add("wait");
+		return wait;
+	};
+
 	callbacks.unsettled = [&counts]
 	{
 		counts.Add("unsettled");
@@ -293,13 +299,14 @@ TEST_CASE("a first screenshot run calls each callback in order, as often as its 
 
 	REQUIRE(run.exit == 0);
 
-	CHECK(run.Text("order") == "font,setup,busy,pad,backdrop,menus,layout,update,drawAlpha,panelsDrawn,unsettled,frameDone,presented,stop");
+	CHECK(run.Text("order") == "font,setup,busy,wait,pad,backdrop,menus,layout,update,drawAlpha,panelsDrawn,unsettled,frameDone,presented,stop");
 	CHECK(run.Count("font") == 1);
 	CHECK(run.Count("setup") == 1);
 	CHECK(run.Count("stop") == 1);
 	CHECK(run.Count("layout") == 1);
 	CHECK(run.Text("docked") == "1");
 	CHECK(run.Count("busy") == frames);
+	CHECK(run.Count("wait") == frames);
 	CHECK(run.Count("frameDone") == frames);
 	CHECK(run.Count("presented") == frames - 1);
 	CHECK(run.Count("unsettled") == frames * settle_builds);

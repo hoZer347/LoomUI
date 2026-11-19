@@ -62,6 +62,9 @@ namespace Loom
 			std::function<bool()> busy;
 			std::function<bool()> unsettled;
 
+			// The seconds to wait for events before the next frame, given the wait the app chose, so an animation can wake it sooner.
+			std::function<double(double wait)> wait;
+
 			// Right after each panel's window Begins, with its title, and once after the last panel's End while the veil still applies.
 			ExtensionRegistry::Begun panelBegun;
 			std::function<void()> panelsDrawing;

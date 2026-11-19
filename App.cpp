@@ -485,7 +485,8 @@ namespace Loom
 			const bool held = std::ranges::any_of(
 				mouse_buttons,
 				[window](const int button) { return glfwGetMouseButton(window, button) == GLFW_PRESS; });
-			const double wait = FrameWait(Ask(app.callbacks.busy), held, glfwGetTime() - lastInput, minimised);
+			const double chosen = FrameWait(Ask(app.callbacks.busy), held, glfwGetTime() - lastInput, minimised);
+			const double wait = app.callbacks.wait ? app.callbacks.wait(chosen) : chosen;
 
 			app.polling = true;
 			const double before = glfwGetTime();
