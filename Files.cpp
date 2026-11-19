@@ -70,7 +70,9 @@ namespace Loom::Files
 		const AtomicWrite& how)
 	{
 		std::error_code code;
-		std::filesystem::create_directories(file.parent_path(), code);
+
+		if (how.makeFolder)
+			std::filesystem::create_directories(file.parent_path(), code);
 
 		std::filesystem::path partial = how.partial;
 
@@ -81,7 +83,11 @@ namespace Loom::Files
 		};
 
 		if (!WriteWhole(partial, text, how.flush))
+		{
+			std::filesystem::remove(partial, code);
+
 			return false;
+		};
 
 		for (int attempt = 0; attempt < how.attempts; attempt++)
 		{
@@ -100,6 +106,11 @@ namespace Loom::Files
 	int64_t EpochSeconds(std::chrono::system_clock::time_point time)
 	{
 		return std::chrono::duration_cast<std::chrono::seconds>(time.time_since_epoch()).count();
+	};
+
+	int64_t EpochMilliseconds(std::chrono::system_clock::time_point time)
+	{
+		return std::chrono::duration_cast<std::chrono::milliseconds>(time.time_since_epoch()).count();
 	};
 
 	LockFile::LockFile(const std::filesystem::path& file)

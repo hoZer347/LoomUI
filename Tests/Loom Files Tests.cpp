@@ -185,6 +185,19 @@ TEST_SUITE("Loom Files")
 		CHECK_FALSE(std::filesystem::exists(folder / PartialOf(file)));
 	};
 
+	TEST_CASE("write atomic makes the folder unless told not to")
+	{
+		const TempFolder scratch;
+		const std::filesystem::path made = scratch.folder / "made" / "atomic.json";
+		const std::filesystem::path missing = scratch.folder / "missing" / "atomic.json";
+
+		CHECK(Files::WriteAtomic(made, "text"));
+		CHECK(ReadBytes(made) == "text");
+
+		CHECK_FALSE(Files::WriteAtomic(missing, "text", { .makeFolder = false }));
+		CHECK_FALSE(std::filesystem::exists(missing.parent_path()));
+	};
+
 	TEST_CASE("write atomic replaces an existing file")
 	{
 		const TempFolder scratch;
@@ -275,6 +288,17 @@ TEST_SUITE("Loom Files")
 
 		CHECK(Files::EpochSeconds(epoch) == 0);
 		CHECK(Files::EpochSeconds(known) == 1738367999);
+	};
+
+	TEST_CASE("epoch milliseconds counts whole milliseconds since 1970")
+	{
+		using namespace std::chrono;
+
+		const system_clock::time_point epoch{ };
+		const system_clock::time_point known = sys_days(year(2025) / January / 31) + hours(23) + minutes(59) + seconds(59) + milliseconds(999);
+
+		CHECK(Files::EpochMilliseconds(epoch) == 0);
+		CHECK(Files::EpochMilliseconds(known) == 1738367999999);
 	};
 
 	#pragma endregion

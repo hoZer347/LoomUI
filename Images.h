@@ -52,6 +52,9 @@ namespace Loom::Images
 	// The file extension that goes with a media type, .png when it is none of the others.
 	std::string_view ExtensionOf(std::string_view media);
 
+	// The media type of a file extension with its dot, in any case: PNG, JPEG, GIF, WebP, MP4 and WebM. Empty for any other.
+	std::string_view MediaOfExtension(std::string_view extension);
+
 	bool ReadFile(const std::filesystem::path& file, std::string& bytes, std::string& error);
 
 	bool Decode(const std::filesystem::path& file, int side, Pixels& pixels, std::string& error);

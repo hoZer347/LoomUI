@@ -43,6 +43,9 @@ namespace Loom::Files
 		std::filesystem::path partial{ };
 		bool flush = true;
 
+		// A file whose folder is not there fails to write when this is false.
+		bool makeFolder = true;
+
 		// Moving the partial into place is tried this often, a millisecond apart, as readers may hold the file.
 		int attempts = 1;
 	};
@@ -54,6 +57,7 @@ namespace Loom::Files
 		const AtomicWrite& how = { });
 
 	int64_t EpochSeconds(std::chrono::system_clock::time_point time);
+	int64_t EpochMilliseconds(std::chrono::system_clock::time_point time);
 
 	/**
 	* Loom::Files::LockFile

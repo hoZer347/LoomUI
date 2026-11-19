@@ -2,6 +2,7 @@
 
 #include "Text.h"
 
+#include <compare>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -121,6 +122,40 @@ TEST_SUITE("Loom Text")
 	{
 		CHECK(Text::Narrow(L"").empty());
 		CHECK(Text::Wide("").empty());
+	};
+
+	TEST_CASE("compare ignores the case of ASCII letters and puts a prefix first")
+	{
+		CHECK(std::is_eq(Text::CompareNoCase("Alpha", "aLPHA")));
+		CHECK(std::is_lt(Text::CompareNoCase("apple", "Banana")));
+		CHECK(std::is_gt(Text::CompareNoCase("b", "A")));
+		CHECK(std::is_lt(Text::CompareNoCase("Ab", "abc")));
+		CHECK(std::is_eq(Text::CompareNoCase("", "")));
+	};
+
+	TEST_CASE("starts with and contains ignore case and treat empty text as having nothing")
+	{
+		CHECK(Text::StartsWithNoCase("C:/Users/Me", "c:/users"));
+		CHECK_FALSE(Text::StartsWithNoCase("C:/Us", "c:/users"));
+		CHECK(Text::StartsWithNoCase("abc", ""));
+		CHECK(Text::ContainsNoCase("Run SLOTS.py now", "slots.PY"));
+		CHECK_FALSE(Text::ContainsNoCase("Run now", "slots"));
+		CHECK_FALSE(Text::ContainsNoCase("", ""));
+		CHECK(Text::ContainsNoCase("a", ""));
+	};
+
+	TEST_CASE("an absolute path starts at a root or at a drive's root")
+	{
+		CHECK(Text::IsAbsolutePath("C:\\Work\\a.png"));
+		CHECK(Text::IsAbsolutePath("c:/Work/a.png"));
+		CHECK(Text::IsAbsolutePath("/home/me/a.png"));
+		CHECK(Text::IsAbsolutePath("\\\\server\\share\\a.png"));
+		CHECK(Text::IsAbsolutePath("\\Work\\a.png"));
+		CHECK_FALSE(Text::IsAbsolutePath("Work\\a.png"));
+		CHECK_FALSE(Text::IsAbsolutePath("C:a.png"));
+		CHECK_FALSE(Text::IsAbsolutePath("C:"));
+		CHECK_FALSE(Text::IsAbsolutePath("1:\\a.png"));
+		CHECK_FALSE(Text::IsAbsolutePath(""));
 	};
 
 	TEST_CASE("narrow and wide keep only the length they are given")

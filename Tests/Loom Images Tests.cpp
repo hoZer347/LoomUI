@@ -195,6 +195,20 @@ TEST_SUITE("Loom Images")
 		CHECK(Images::ExtensionOf("") == ".png");
 	};
 
+	TEST_CASE("a file extension names its media type in any case and is empty for others")
+	{
+		CHECK(Images::MediaOfExtension(".png") == Images::PngMedia);
+		CHECK(Images::MediaOfExtension(".JPG") == Images::JpegMedia);
+		CHECK(Images::MediaOfExtension(".jpeg") == Images::JpegMedia);
+		CHECK(Images::MediaOfExtension(".Gif") == "image/gif");
+		CHECK(Images::MediaOfExtension(".webp") == "image/webp");
+		CHECK(Images::MediaOfExtension(".mp4") == "video/mp4");
+		CHECK(Images::MediaOfExtension(".WEBM") == "video/webm");
+		CHECK(Images::MediaOfExtension(".bmp").empty());
+		CHECK(Images::MediaOfExtension("png").empty());
+		CHECK(Images::MediaOfExtension("").empty());
+	};
+
 	TEST_CASE("an image's extension says so, in any case")
 	{
 		CHECK(Images::IsImageFile("a.png"));

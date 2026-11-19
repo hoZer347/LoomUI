@@ -1,6 +1,7 @@
 #include "TextLayout.h"
 
 #include "Images.h"
+#include "Text.h"
 
 #include <algorithm>
 #include <cctype>
@@ -133,15 +134,6 @@ namespace Loom::TextLayout
 			size_t end = 0;
 		};
 
-		bool IsAbsolute(std::string_view path)
-		{
-			constexpr size_t drive_length = 3;
-
-			return path.starts_with("\\\\") || path.starts_with('/') ||
-				(path.size() >= drive_length && std::isalpha((unsigned char)path[0]) && path[1] == ':' &&
-					(path[2] == '\\' || path[2] == '/'));
-		};
-
 		// The closing bracket of a link whose destination starts at begin. Paths
 		// hold spaces, and parentheses as long as they pair up.
 		size_t LinkEnd(std::string_view text, size_t begin, size_t end)
@@ -185,7 +177,7 @@ namespace Loom::TextLayout
 
 				const std::string path = FigureFile(text.substr(pathBegin, pathEnd - pathBegin));
 
-				if (IsAbsolute(path) && Images::IsImageFile(path))
+				if (Text::IsAbsolutePath(path) && Images::IsImageFile(path))
 				{
 					figure = { at, pathBegin, pathEnd, close + 1 };
 					return true;

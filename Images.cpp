@@ -29,6 +29,8 @@ namespace Loom::Images
 
 		constexpr std::string_view gif_media = "image/gif";
 		constexpr std::string_view webp_media = "image/webp";
+		constexpr std::string_view mp4_media = "video/mp4";
+		constexpr std::string_view webm_media = "video/webm";
 
 		constexpr std::string_view image_extensions[] = { ".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp" };
 
@@ -332,6 +334,31 @@ namespace Loom::Images
 	std::string_view ExtensionOf(std::string_view media)
 	{
 		return media == JpegMedia ? ".jpg" : media == gif_media ? ".gif" : media == webp_media ? ".webp" : ".png";
+	};
+
+	std::string_view MediaOfExtension(std::string_view extension)
+	{
+		const std::string lower = Text::Lower(extension);
+
+		if (lower == ".png")
+			return PngMedia;
+
+		if (lower == ".jpg" || lower == ".jpeg")
+			return JpegMedia;
+
+		if (lower == ".gif")
+			return gif_media;
+
+		if (lower == ".webp")
+			return webp_media;
+
+		if (lower == ".mp4")
+			return mp4_media;
+
+		if (lower == ".webm")
+			return webm_media;
+
+		return { };
 	};
 
 	#pragma endregion

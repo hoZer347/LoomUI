@@ -1,5 +1,6 @@
 #include "Text.h"
 
+#include <algorithm>
 #include <cctype>
 #include <chrono>
 
@@ -38,6 +39,53 @@ namespace Loom::Text
 			c = (char)std::tolower((unsigned char)c);
 
 		return lower;
+	};
+
+	std::strong_ordering CompareNoCase(
+		std::string_view a,
+		std::string_view b)
+	{
+		const size_t shared = std::min(a.size(), b.size());
+
+		for (size_t index = 0; index < shared; ++index)
+		{
+			const int left = std::tolower((unsigned char)a[index]);
+			const int right = std::tolower((unsigned char)b[index]);
+
+			if (left != right)
+				return left <=> right;
+		};
+
+		return a.size() <=> b.size();
+	};
+
+	bool StartsWithNoCase(
+		std::string_view text,
+		std::string_view prefix)
+	{
+		return text.size() >= prefix.size() && CompareNoCase(text.substr(0, prefix.size()), prefix) == 0;
+	};
+
+	bool ContainsNoCase(
+		std::string_view text,
+		std::string_view needle)
+	{
+		return std::ranges::search(text, needle, [](char a, char b)
+		{
+			return std::tolower((unsigned char)a) == std::tolower((unsigned char)b);
+		}).begin() != text.end();
+	};
+
+	bool IsAbsolutePath(std::string_view path)
+	{
+		constexpr size_t drive_length = 3;
+
+		const auto slash = [](char c) { return c == '/' || c == '\\'; };
+
+		if (path.empty())
+			return false;
+
+		return slash(path[0]) || (path.size() >= drive_length && std::isalpha((unsigned char)path[0]) && path[1] == ':' && slash(path[2]));
 	};
 
 	std::optional<int64_t> ParseTime(const std::string& text)
