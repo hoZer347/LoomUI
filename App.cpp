@@ -299,7 +299,7 @@ namespace Loom
 
 			app.tabs->Update(dockspace);
 
-			ExtensionRegistry::DrawAll(app.project, app.dropped, app.callbacks.pad);
+			ExtensionRegistry::DrawAll(app.project, app.dropped, app.callbacks.pad, app.callbacks.panelBegun, app.callbacks.panelsDrawing);
 			ImGui::PopStyleColor(veiled);
 
 			Call(app.callbacks.panelsDrawn);

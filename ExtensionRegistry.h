@@ -189,11 +189,17 @@ namespace Loom
 		// Shows how a panel's window opens. tall is whether the window is docked, or not made yet, and so takes a tall tab bar.
 		using Pad = std::function<void(bool tall, const std::function<void()>& submit)>;
 
+		// Called with a panel's title right after its window Begins, whether or not it is open.
+		using Begun = std::function<void(const std::string& title)>;
+
 		// Each frame: every panel's update, then the shown panels between Begin and End, each given the project,
 		// and files dropped from outside handed to the panel they were dropped on. dropped is empty after.
+		// begun is called after each Begin, and drawn once after the last End.
 		LOOM_UI_API static void DrawAll(
 			const std::string& project,
 			std::vector<std::string>& dropped,
-			const Pad& pad = { });
+			const Pad& pad = { },
+			const Begun& begun = { },
+			const std::function<void()>& drawn = { });
 	};
 };

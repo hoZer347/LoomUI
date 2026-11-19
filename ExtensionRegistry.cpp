@@ -142,7 +142,9 @@ namespace Loom
 	void ExtensionRegistry::DrawAll(
 		const std::string& project,
 		std::vector<std::string>& dropped,
-		const Pad& pad)
+		const Pad& pad,
+		const Begun& begun,
+		const std::function<void()>& drawn)
 	{
 		for (Panel& panel : Panels())
 			if (panel.update)
@@ -175,6 +177,9 @@ namespace Loom
 				return began;
 			}();
 
+			if (begun)
+				begun(panel.title);
+
 			if (open)
 			{
 				panel.draw(project);
@@ -189,6 +194,9 @@ namespace Loom
 
 			ImGui::End();
 		};
+
+		if (drawn)
+			drawn();
 
 		dropped.clear();
 	};

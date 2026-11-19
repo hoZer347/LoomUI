@@ -411,6 +411,53 @@ TEST_CASE("the pad wraps each shown panel's Begin, tall while its window is not 
 	CHECK(draws == 2);
 }
 
+TEST_CASE("begun hears each shown panel's title once its window begins, before it draws, and drawn runs once after every panel")
+{
+	const Context context;
+	std::vector<std::string> calls;
+
+	ExtensionRegistry::AddPanel("I", "Alpha", [&calls](const std::string&) { calls.push_back("draw Alpha"); });
+	ExtensionRegistry::AddPanel("I", "Beta", [&calls](const std::string&) { calls.push_back("draw Beta"); });
+	ExtensionRegistry::AddPanel("I", "Gamma", [&calls](const std::string&) { calls.push_back("draw Gamma"); });
+	ExtensionRegistry::Panels().front().shown = true;
+	Last().shown = true;
+
+	const std::string alpha = ExtensionRegistry::Panels().front().title;
+	const std::string gamma = Last().title;
+	std::vector<std::string> dropped;
+
+	ImGui::NewFrame();
+	ExtensionRegistry::DrawAll(
+		"project",
+		dropped,
+		{ },
+		[&calls](const std::string& title) { calls.push_back("begun " + title); },
+		[&calls]() { calls.push_back("drawn"); });
+	ImGui::Render();
+
+	CHECK(calls == std::vector<std::string>{
+		"begun " + alpha,
+		"draw Alpha",
+		"begun " + gamma,
+		"draw Gamma",
+		"drawn" });
+}
+
+TEST_CASE("drawn runs with no panel shown")
+{
+	const Context context;
+	int drawn = 0;
+	std::vector<std::string> dropped;
+
+	ExtensionRegistry::AddPanel("I", "Alpha", [](const std::string&) { });
+
+	ImGui::NewFrame();
+	ExtensionRegistry::DrawAll("project", dropped, { }, { }, [&drawn]() { ++drawn; });
+	ImGui::Render();
+
+	CHECK(drawn == 1);
+}
+
 TEST_CASE("dropped files go to the shown panel under the mouse that takes them, and are gone after either way")
 {
 	const Context context;

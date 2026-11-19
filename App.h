@@ -62,6 +62,10 @@ namespace Loom
 			std::function<bool()> busy;
 			std::function<bool()> unsettled;
 
+			// Right after each panel's window Begins, with its title, and once after the last panel's End while the veil still applies.
+			ExtensionRegistry::Begun panelBegun;
+			std::function<void()> panelsDrawing;
+
 			// After the panels are drawn, and after each frame is rendered, and after each frame is shown.
 			std::function<void()> panelsDrawn;
 			std::function<void()> frameDone;
