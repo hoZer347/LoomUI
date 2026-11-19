@@ -2,6 +2,7 @@
 # shell's PATH, and returns the compiler the build will use ('clang' or 'msvc'). Dot-source it.
 # clang-cl comes from -LlvmFolder (an LLVM folder or its bin), then Visual Studio's own
 # LLVM, then PATH, then the newest %LOCALAPPDATA%\llvm-*\bin. Without one, it warns and returns 'msvc'.
+# Get-BuildJobs: the parallel compile jobs, 80% of the logical processors and at least one.
 
 $script:VisualStudioInstaller = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer'
 
@@ -51,6 +52,13 @@ function Find-ClangFolder([string] $visualStudio, [string] $llvmFolder)
     }
 
     return $null
+}
+
+$cpuShare = 0.8
+
+function Get-BuildJobs([int] $Processors = [Environment]::ProcessorCount)
+{
+    return [Math]::Max(1, [int][Math]::Floor($Processors * $cpuShare))
 }
 
 function Add-ToPath([string] $folder, [string] $program)
