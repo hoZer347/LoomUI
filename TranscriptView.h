@@ -42,6 +42,11 @@ namespace Loom
 			bool boxed = false;
 			bool link = false;
 			bool diff = false;
+			// A hidden row takes no room, is not drawn and is left out of what is copied.
+			bool hidden = false;
+			// How far the body of a row that is not boxed is indented, and how far it is set down, for what the source draws in front of it.
+			float lead = 0;
+			float pad = 0;
 
 			// The body, or what follows the header of a folding row.
 			std::string_view text;
@@ -63,6 +68,8 @@ namespace Loom
 			virtual std::string Header(size_t index) const = 0;
 			virtual void SetOpen(size_t index, bool open) = 0;
 			virtual void Activate(size_t index) = 0;
+			// Draws in front of the body of a row shown that is not folding, at its top left, in the room its lead and pad leave.
+			virtual void DrawLead(size_t index, ImVec2 at) const { };
 		};
 
 		// Lays out and draws the rows in a child window leaving footer below it. Working shows a moving label after the last row.
@@ -96,11 +103,15 @@ namespace Loom
 
 		struct Laid
 		{
+			Row::Kind kind = Row::Kind::Plain;
 			float width = -1;
 			uint32_t revision = UINT32_MAX;
 			bool open = false;
 			float top = 0;
 			float height = 0;
+			bool hidden = false;
+			float lead = 0;
+			float pad = 0;
 			TextLayout::Layout body;
 			TextLayout::Layout detail;
 			std::vector<TextLayout::Paragraph> paragraphs;
@@ -116,7 +127,8 @@ namespace Loom
 			std::string path;
 		};
 
-		void Relay(float width);
+		// The height of the transcript, up to and with the gap after its last shown row.
+		float Relay(float width);
 		void DrawBlock(size_t index, ImVec2 origin, float width);
 		void DrawLayout(const TextLayout::Layout& layout, std::string_view text, size_t index, Part part, ImVec2 origin, float width);
 		void DrawFigure(const std::string& path, ImVec2 at, float width);
@@ -127,6 +139,8 @@ namespace Loom
 		size_t BlockAt(float y) const;
 		Caret CaretAt(ImVec2 point) const;
 		bool LinkAt(ImVec2 point, size_t& index) const;
+		static ImVec2 BodyOffset(const Row& row);
+		static float BodyWidth(const Row& row, float width);
 		std::pair<size_t, size_t> SelectedIn(size_t index, Part part, size_t size) const;
 		std::string SelectedText() const;
 		void CopyHovered();

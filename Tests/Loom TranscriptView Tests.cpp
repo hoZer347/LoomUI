@@ -33,6 +33,8 @@ namespace
 	constexpr float wheel_up = 3;
 	constexpr float wheel_to_bottom = -100000;
 	constexpr float stick_slack = 4;
+	constexpr float lead_width = 40;
+	constexpr float pad_height = 10;
 
 	struct Item final
 	{
@@ -43,7 +45,16 @@ namespace
 		bool open = false;
 		bool boxed = false;
 		bool link = false;
+		bool hidden = false;
+		float lead = 0;
+		float pad = 0;
 		uint32_t revision = 0;
+	};
+
+	struct Lead final
+	{
+		size_t index = 0;
+		ImVec2 at{ };
 	};
 
 	// A test adapter: rows held as strings, recording what the view asks of them.
@@ -60,6 +71,9 @@ namespace
 			row.open = line.open;
 			row.boxed = line.boxed;
 			row.link = line.link;
+			row.hidden = line.hidden;
+			row.lead = line.lead;
+			row.pad = line.pad;
 			row.text = line.text;
 			row.detail = line.detail;
 			row.colour = IM_COL32_WHITE;
@@ -81,6 +95,13 @@ namespace
 
 		void Activate(size_t index) override { activated.push_back(index); };
 
+		void DrawLead(
+			size_t index,
+			ImVec2 at) const override
+		{
+			leads.push_back({ index, at });
+		};
+
 		Item& Add(
 			Kind kind,
 			std::string text,
@@ -101,6 +122,7 @@ namespace
 		std::vector<Item> lines;
 		std::vector<size_t> toggled;
 		std::vector<size_t> activated;
+		mutable std::vector<Lead> leads;
 	};
 
 	struct View final
@@ -219,7 +241,17 @@ namespace
 			Frames(settle_frames);
 		};
 
+		// What the source was asked to draw in front of rows in one frame.
+		std::vector<Lead> Leads()
+		{
+			rows.leads.clear();
+			Frame();
+
+			return rows.leads;
+		};
+
 		bool Following() const { return Scroll() >= ScrollMax() - stick_slack; };
+		float Height() const { return Transcript()->ContentSize.y; };
 		float Scroll() const { return Transcript()->Scroll.y; };
 		float ScrollMax() const { return Transcript()->ScrollMax.y; };
 		std::string& Clipboard() const { return m_screen.Clipboard(); };
@@ -540,6 +572,109 @@ TEST_SUITE("Loom TranscriptView")
 		view.ClickAt(view.At({ 1, view.Line() / 2 }));
 
 		CHECK(view.rows.activated.empty());
+	};
+
+	#pragma endregion
+
+	#pragma region Hidden rows and leads
+
+	TEST_CASE("a hidden row takes no room, draws nothing in front and is left out of what is copied")
+	{
+		View view;
+		view.rows.Add(Kind::Markdown, "alpha");
+		view.rows.Add(Kind::Plain, "beta");
+		view.Frames(settle_frames);
+		const float shown = view.Height();
+
+		Item& ghost = view.rows.Add(Kind::Plain, "ghost");
+		view.Frames(settle_frames);
+
+		CHECK(view.Height() > shown);
+
+		ghost.hidden = true;
+		view.Frames(settle_frames);
+
+		CHECK(view.Height() == doctest::Approx(shown));
+
+		for (const Lead& lead : view.Leads())
+			CHECK(lead.index != 2);
+
+		view.DragFrom(view.At({ 1, 1 }), view.Corner());
+		view.Copy();
+
+		CHECK(view.Clipboard() == "alpha\n\nbeta");
+	};
+
+	TEST_CASE("a hidden folding row takes no room")
+	{
+		View view;
+		view.rows.Add(Kind::Plain, "beta");
+		view.Frames(settle_frames);
+		const float shown = view.Height();
+
+		view.rows.Add(Kind::Folding, "file.txt", "secret", true).hidden = true;
+		view.Frames(settle_frames);
+
+		CHECK(view.Height() == doctest::Approx(shown));
+	};
+
+	TEST_CASE("a row's lead moves its text right and its pad sets it down")
+	{
+		View view;
+		Item& note = view.rows.Add(Kind::Plain, "Task finished");
+		note.link = true;
+		view.Frames(settle_frames);
+		const float flat = view.Height();
+
+		note.lead = lead_width;
+		note.pad = pad_height;
+		view.Frames(settle_frames);
+
+		CHECK(view.Height() == doctest::Approx(flat + pad_height * 2));
+
+		view.ClickAt(view.At({ 1, pad_height + view.Line() / 2 }));
+
+		CHECK(view.rows.activated.empty());
+
+		view.ClickAt(view.At({ lead_width + 1, pad_height + view.Line() / 2 }));
+
+		CHECK(view.rows.activated == std::vector<size_t>{ 0 });
+	};
+
+	TEST_CASE("a boxed row ignores its lead and pad")
+	{
+		View view;
+		Item& said = view.rows.Add(Kind::Plain, "hello");
+		said.boxed = true;
+		view.Frames(settle_frames);
+		const float boxed = view.Height();
+
+		said.lead = lead_width;
+		said.pad = pad_height;
+		view.Frames(settle_frames);
+
+		CHECK(view.Height() == doctest::Approx(boxed));
+	};
+
+	TEST_CASE("the source draws in front of each shown row that does not fold, at its top left")
+	{
+		View view;
+		view.rows.Add(Kind::Plain, "alpha");
+		view.rows.Add(Kind::Folding, "file.txt", "secret");
+		view.rows.Add(Kind::Plain, "ghost").hidden = true;
+		view.rows.Add(Kind::Markdown, "beta");
+		view.Frames(settle_frames);
+
+		const std::vector<Lead> leads = view.Leads();
+		const ImVec2 origin = view.At({ 0, 0 });
+
+		REQUIRE(leads.size() == 2);
+		CHECK(leads[0].index == 0);
+		CHECK(leads[0].at.x == doctest::Approx(origin.x));
+		CHECK(leads[0].at.y == doctest::Approx(origin.y));
+		CHECK(leads[1].index == 3);
+		CHECK(leads[1].at.x == doctest::Approx(origin.x));
+		CHECK(leads[1].at.y > origin.y + view.Line());
 	};
 
 	#pragma endregion

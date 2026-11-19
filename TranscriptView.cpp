@@ -59,11 +59,6 @@ namespace Loom
 			return row.kind == Row::Kind::Folding;
 		};
 
-		float BodyInset(const Row& row)
-		{
-			return row.boxed ? box_padding : 0;
-		};
-
 		ImVec2 DetailOrigin()
 		{
 			return { indent_width, ImGui::GetTextLineHeightWithSpacing() };
@@ -103,7 +98,19 @@ namespace Loom
 		m_stick = true;
 	};
 
-	void TranscriptView::Relay(float width)
+	ImVec2 TranscriptView::BodyOffset(const Row& row)
+	{
+		return row.boxed ? ImVec2(box_padding, box_padding) : ImVec2(row.lead, row.pad);
+	};
+
+	float TranscriptView::BodyWidth(
+		const Row& row,
+		float width)
+	{
+		return width - (row.boxed ? box_padding * 2 : row.lead);
+	};
+
+	float TranscriptView::Relay(float width)
 	{
 		const float line = ImGui::GetTextLineHeightWithSpacing();
 		const Measure measure = ChatInput::FontMeasure();
@@ -117,15 +124,30 @@ namespace Loom
 			const Row row = m_source->At(index);
 			Laid& laid = m_laid[index];
 
-			if (laid.width != width || laid.revision != row.revision || laid.open != row.open)
+			if (laid.kind != row.kind)
 			{
-				const bool sameWidth = laid.width == width;
+				laid = Laid{ };
+				laid.kind = row.kind;
+			};
+
+			if (laid.width != width
+				|| laid.revision != row.revision
+				|| laid.open != row.open
+				|| laid.hidden != row.hidden
+				|| laid.lead != row.lead
+				|| laid.pad != row.pad)
+			{
+				const bool sameWidth = laid.width == width && laid.lead == row.lead;
 
 				laid.width = width;
 				laid.revision = row.revision;
 				laid.open = row.open;
+				laid.hidden = row.hidden;
+				laid.lead = row.lead;
+				laid.pad = row.pad;
 
-				const float inset = BodyInset(row);
+				const ImVec2 offset = BodyOffset(row);
+				const float bodyWidth = BodyWidth(row, width);
 
 				if (IsFolding(row))
 				{
@@ -139,8 +161,9 @@ namespace Loom
 					laid.detail = row.open
 						? LayOut(row.detail, laid.lines, width - indent_width, line, indent_width, measure)
 						: Layout{ };
-					laid.height = line + laid.detail.height +
-						(row.open ? ImagesHeight(ImagesOf(row), width - indent_width) : 0);
+					laid.height = row.hidden
+						? 0
+						: line + laid.detail.height + (row.open ? ImagesHeight(ImagesOf(row), width - indent_width) : 0);
 				}
 				else
 				{
@@ -163,7 +186,7 @@ namespace Loom
 							laid.parsedRevision = row.revision;
 						};
 
-						Extend(laid.body, row.text, laid.paragraphs, same, width, line, indent_width, measure, figureHeight);
+						Extend(laid.body, row.text, laid.paragraphs, same, bodyWidth, line, indent_width, measure, figureHeight);
 					}
 					else
 					{
@@ -173,16 +196,19 @@ namespace Loom
 							laid.linesRevision = row.revision;
 						};
 
-						laid.body = LayOut(row.text, laid.lines, width - inset * 2, line, indent_width, measure);
+						laid.body = LayOut(row.text, laid.lines, bodyWidth, line, indent_width, measure);
 					};
 
-					laid.height = laid.body.height + ImagesHeight(ImagesOf(row), width - inset * 2) + inset * 2;
+					laid.height = row.hidden ? 0 : laid.body.height + ImagesHeight(ImagesOf(row), bodyWidth) + offset.y * 2;
 				};
 			};
 
 			laid.top = top;
-			top += laid.height + block_gap;
+			if (!row.hidden)
+				top += laid.height + block_gap;
 		};
+
+		return top;
 	};
 
 	void TranscriptView::ImagesChanged(const Source& source)
@@ -230,6 +256,9 @@ namespace Loom
 		{
 			const Row row = m_source->At(index);
 
+			if (row.hidden)
+				continue;
+
 			if (!IsFolding(row))
 				append(row.text, SelectedIn(index, Part::Body, row.text.size()));
 			else if (row.open)
@@ -259,7 +288,20 @@ namespace Loom
 		const auto after = std::upper_bound(m_laid.begin(), m_laid.end(), y,
 			[](float top, const Laid& laid) { return top < laid.top; });
 
-		return after == m_laid.begin() ? 0 : (size_t)(after - m_laid.begin()) - 1;
+		const size_t index = after == m_laid.begin() ? 0 : (size_t)(after - m_laid.begin()) - 1;
+
+		if (m_laid.empty() || !m_laid[index].hidden)
+			return index;
+
+		const auto visible = [](const Laid& laid) { return !laid.hidden; };
+		const auto next = std::find_if(m_laid.begin() + (std::ptrdiff_t)index, m_laid.end(), visible);
+
+		if (next != m_laid.end())
+			return (size_t)(next - m_laid.begin());
+
+		const auto previous = std::find_if(std::make_reverse_iterator(m_laid.begin() + (std::ptrdiff_t)index), m_laid.rend(), visible);
+
+		return previous == m_laid.rend() ? m_laid.size() : (size_t)(m_laid.rend() - previous) - 1;
 	};
 
 	TranscriptView::Caret TranscriptView::CaretAt(ImVec2 point) const
@@ -268,6 +310,10 @@ namespace Loom
 			return { };
 
 		const size_t index = BlockAt(point.y);
+
+		if (index >= m_laid.size())
+			return { };
+
 		const Row row = m_source->At(index);
 		const Laid& laid = m_laid[index];
 		const float line = ImGui::GetTextLineHeightWithSpacing();
@@ -283,10 +329,10 @@ namespace Loom
 				point.x - origin.x, point.y - laid.top - origin.y, line, ChatInput::FontMeasure()) };
 		};
 
-		const float inset = BodyInset(row);
+		const ImVec2 offset = BodyOffset(row);
 
 		return { index, Part::Body, OffsetAt(laid.body, row.text,
-			point.x - inset, point.y - laid.top - inset, line, ChatInput::FontMeasure()) };
+			point.x - offset.x, point.y - laid.top - offset.y, line, ChatInput::FontMeasure()) };
 	};
 
 	bool TranscriptView::LinkAt(ImVec2 point, size_t& index) const
@@ -296,15 +342,18 @@ namespace Loom
 
 		index = BlockAt(point.y);
 
+		if (index >= m_laid.size())
+			return false;
+
 		const Row row = m_source->At(index);
 
 		if (!row.link)
 			return false;
 
-		const float inset = BodyInset(row);
+		const ImVec2 offset = BodyOffset(row);
 
 		return OnText(m_laid[index].body, row.text,
-			point.x - inset, point.y - m_laid[index].top - inset, ImGui::GetTextLineHeightWithSpacing(), ChatInput::FontMeasure());
+			point.x - offset.x, point.y - m_laid[index].top - offset.y, ImGui::GetTextLineHeightWithSpacing(), ChatInput::FontMeasure());
 	};
 
 	void TranscriptView::HandleMouse(ImVec2 origin)
@@ -348,11 +397,12 @@ namespace Loom
 							Images::Open(figure.path);
 
 				size_t linked = 0;
+				const bool onLink = clicked && LinkAt(point, linked);
 
-				if (clicked && LinkAt(point, linked))
+				if (onLink)
 					m_source->Activate(linked);
 
-				if (clicked)
+				if (clicked && !onLink)
 				{
 					const Row row = m_source->At(m_hovered);
 
@@ -512,6 +562,9 @@ namespace Loom
 		const ImVec2 at = { origin.x, origin.y + laid.top };
 		ImDrawList* const draw = ImGui::GetWindowDrawList();
 
+		if (row.hidden)
+			return;
+
 		if (IsFolding(row))
 		{
 			const float line = ImGui::GetTextLineHeightWithSpacing();
@@ -534,13 +587,15 @@ namespace Loom
 			return;
 		};
 
-		const float inset = BodyInset(row);
+		const ImVec2 offset = BodyOffset(row);
+		const float bodyWidth = BodyWidth(row, width);
 
 		if (row.boxed)
 			draw->AddRectFilled(at, { at.x + width, at.y + laid.height }, user_box, box_padding);
 
-		DrawLayout(laid.body, row.text, index, Part::Body, { at.x + inset, at.y + inset }, width - inset * 2);
-		DrawImages(ImagesOf(row), { at.x + inset, at.y + inset + laid.body.height }, width - inset * 2);
+		m_source->DrawLead(index, at);
+		DrawLayout(laid.body, row.text, index, Part::Body, { at.x + offset.x, at.y + offset.y }, bodyWidth);
+		DrawImages(ImagesOf(row), { at.x + offset.x, at.y + offset.y + laid.body.height }, bodyWidth);
 	};
 
 	void TranscriptView::Draw(Source& source, ImageCache& images, float footer, bool working)
@@ -562,7 +617,7 @@ namespace Loom
 		const float width = ImGui::GetContentRegionAvail().x;
 		const ImVec2 origin = ImGui::GetCursorScreenPos();
 
-		Relay(width);
+		const float end = Relay(width);
 
 		const float scroll = ImGui::GetScrollY();
 		const float bottom = scroll + ImGui::GetWindowHeight();
@@ -577,7 +632,6 @@ namespace Loom
 			DrawBlock(index, origin, width);
 
 		const float line = ImGui::GetTextLineHeightWithSpacing();
-		const float end = m_laid.empty() ? 0 : m_laid.back().top + m_laid.back().height + block_gap;
 
 		if (working)
 		{
