@@ -1,5 +1,6 @@
 #include "EditorTheme.h"
 
+#include "Images.h"
 #include "imgui_internal.h"
 
 #include <algorithm>
@@ -442,24 +443,9 @@ namespace Loom
 		const ColourIcon& icon,
 		const int scale)
 	{
-		const size_t factor = (size_t)(std::max)(1, scale);
-		const size_t width = (size_t)icon.width * factor;
-		const size_t height = (size_t)icon.height * factor;
-		const size_t channels = (size_t)IconChannels;
+		Images::Pixels enlarged = Images::Enlarged({ icon.width, icon.height, icon.rgba }, scale);
 
-		ColourIcon scaled;
-		scaled.width = (int)width;
-		scaled.height = (int)height;
-		scaled.rgba.resize(width * height * channels);
-
-		for (size_t y = 0; y < height; ++y)
-			for (size_t x = 0; x < width; ++x)
-				std::copy_n(
-					icon.rgba.begin() + ((y / factor) * (size_t)icon.width + x / factor) * channels,
-					channels,
-					scaled.rgba.begin() + (y * width + x) * channels);
-
-		return scaled;
+		return { enlarged.width, enlarged.height, std::move(enlarged.rgba) };
 	};
 
 	#pragma endregion

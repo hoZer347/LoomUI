@@ -285,6 +285,64 @@ TEST_SUITE("Loom Images")
 		CHECK(pixels.height == 1);
 	};
 
+	TEST_CASE("one decoder decodes image after image as a lone decode does, and refuses what is not an image")
+	{
+		const Images::ImageDecoder decoder;
+		const std::string wide = Png(wide_width, wide_height);
+		const std::string pattern = Images::Encode(Pattern(), Images::Format::Png);
+		Images::Pixels pixels;
+		Images::Pixels alone;
+		std::string error;
+
+		REQUIRE(decoder.Decode(wide, halved_side, pixels, error));
+		REQUIRE(Images::DecodeBytes(wide, halved_side, alone, error));
+		CHECK(pixels.width == alone.width);
+		CHECK(pixels.height == alone.height);
+		CHECK(pixels.rgba == alone.rgba);
+
+		REQUIRE(decoder.Decode(pattern, large_side, pixels, error));
+		CHECK(pixels.width == Pattern().width);
+		CHECK(pixels.rgba == Pattern().rgba);
+
+		CHECK_FALSE(decoder.Decode("not an image", large_side, pixels, error));
+		CHECK_FALSE(error.empty());
+
+		REQUIRE(decoder.Decode(wide, large_side, pixels, error));
+		CHECK(pixels.width == wide_width);
+	};
+
+	TEST_CASE("resizing keeps a solid colour and gives the size asked for")
+	{
+		const Images::Pixels solid = Solid(wide_width, wide_height);
+		Images::Pixels resized;
+
+		REQUIRE(Images::Resize(solid, halved_side, wide_height / 2, resized));
+		CHECK(resized.width == halved_side);
+		CHECK(resized.height == wide_height / 2);
+		REQUIRE(resized.rgba.size() == (size_t)halved_side * (wide_height / 2) * channels);
+		CHECK(resized.rgba[0] == red);
+		CHECK(resized.rgba[1] == green);
+		CHECK(resized.rgba[2] == blue);
+	};
+
+	TEST_CASE("enlarging repeats each pixel across and down, and a factor below one changes nothing")
+	{
+		const Images::Pixels pattern = Pattern();
+		const Images::Pixels doubled = Images::Enlarged(pattern, small_side);
+
+		REQUIRE(doubled.width == pattern.width * small_side);
+		REQUIRE(doubled.height == pattern.height * small_side);
+
+		for (int y = 0; y < doubled.height; ++y)
+			for (int x = 0; x < doubled.width; ++x)
+				for (size_t channel = 0; channel < channels; ++channel)
+					CHECK(doubled.rgba[((size_t)y * doubled.width + x) * channels + channel]
+						== pattern.rgba[((size_t)(y / small_side) * pattern.width + x / small_side) * channels + channel]);
+
+		CHECK(Images::Enlarged(pattern, 0).rgba == pattern.rgba);
+		CHECK(Images::Enlarged(pattern, -small_side).width == pattern.width);
+	};
+
 	TEST_CASE("measuring reads the full size, whatever a decode would scale to")
 	{
 		int width = 0;

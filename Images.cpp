@@ -388,11 +388,28 @@ namespace Loom::Images
 
 	bool DecodeBytes(const std::string& bytes, int side, Pixels& pixels, std::string& error)
 	{
+		return ImageDecoder().Decode(bytes, side, pixels, error);
+	};
+
+	struct ImageDecoder::State final
+	{
 		const ComScope com;
 		const ComPtr<IWICImagingFactory> factory = Factory();
-		const ComPtr<IWICBitmapFrameDecode> frame = factory ? FirstFrame(*factory.Get(), bytes) : nullptr;
+	};
 
-		if (frame && Convert(*factory.Get(), frame.Get(), side, pixels))
+	ImageDecoder::ImageDecoder() :
+		m_state(std::make_unique<State>())
+	{
+	};
+
+	ImageDecoder::~ImageDecoder() = default;
+
+	bool ImageDecoder::Decode(const std::string& bytes, int side, Pixels& pixels, std::string& error) const
+	{
+		IWICImagingFactory* const factory = m_state->factory.Get();
+		const ComPtr<IWICBitmapFrameDecode> frame = factory != nullptr ? FirstFrame(*factory, bytes) : nullptr;
+
+		if (frame && Convert(*factory, frame.Get(), side, pixels))
 			return true;
 
 		error = "Not an image.";
@@ -452,6 +469,55 @@ namespace Loom::Images
 		height = (int)high;
 
 		return true;
+	};
+
+	bool Resize(const Pixels& source, int width, int height, Pixels& pixels)
+	{
+		constexpr UINT channels = 4;
+
+		const ComScope com;
+		const ComPtr<IWICImagingFactory> factory = Factory();
+		ComPtr<IWICBitmap> bitmap;
+		ComPtr<IWICBitmapScaler> scaler;
+		ComPtr<IWICFormatConverter> converter;
+
+		if (!factory
+			|| FAILED(factory->CreateBitmapFromMemory((UINT)source.width, (UINT)source.height, GUID_WICPixelFormat32bppRGBA,
+				(UINT)source.width * channels, (UINT)source.rgba.size(), (BYTE*)source.rgba.data(), &bitmap))
+			|| FAILED(factory->CreateBitmapScaler(&scaler))
+			|| FAILED(scaler->Initialize(bitmap.Get(), (UINT)width, (UINT)height, WICBitmapInterpolationModeFant))
+			|| FAILED(factory->CreateFormatConverter(&converter))
+			|| FAILED(converter->Initialize(scaler.Get(), GUID_WICPixelFormat32bppRGBA, WICBitmapDitherTypeNone, nullptr, 0, WICBitmapPaletteTypeCustom)))
+			return false;
+
+		pixels.width = width;
+		pixels.height = height;
+		pixels.rgba.resize((size_t)width * height * channels);
+
+		return SUCCEEDED(converter->CopyPixels(nullptr, (UINT)width * channels, (UINT)pixels.rgba.size(), pixels.rgba.data()));
+	};
+
+	Pixels Enlarged(const Pixels& source, int factor)
+	{
+		constexpr size_t channels = 4;
+
+		const size_t times = (size_t)std::max(1, factor);
+		const size_t width = (size_t)source.width * times;
+		const size_t height = (size_t)source.height * times;
+
+		Pixels enlarged;
+		enlarged.width = (int)width;
+		enlarged.height = (int)height;
+		enlarged.rgba.resize(width * height * channels);
+
+		for (size_t y = 0; y < height; ++y)
+			for (size_t x = 0; x < width; ++x)
+				std::copy_n(
+					source.rgba.begin() + ((y / times) * (size_t)source.width + x / times) * channels,
+					channels,
+					enlarged.rgba.begin() + (y * width + x) * channels);
+
+		return enlarged;
 	};
 
 	std::string Encode(const Pixels& pixels, Format format)

@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <filesystem>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -57,6 +58,30 @@ namespace Loom::Images
 	bool DecodeBytes(const std::string& bytes, int side, Pixels& pixels, std::string& error);
 	bool Measure(const std::filesystem::path& file, int& width, int& height, std::string& error);
 	bool MeasureBytes(const std::string& bytes, int& width, int& height, std::string& error);
+
+	// One imaging factory for a run of decodes, so each image skips making its own.
+	class ImageDecoder final
+	{
+	public:
+		ImageDecoder();
+		~ImageDecoder();
+
+		ImageDecoder(const ImageDecoder&) = delete;
+		ImageDecoder& operator=(const ImageDecoder&) = delete;
+
+		bool Decode(const std::string& bytes, int side, Pixels& pixels, std::string& error) const;
+
+	private:
+		struct State;
+
+		std::unique_ptr<State> m_state;
+	};
+
+	// The pixels scaled to the size with Fant interpolation, which keeps the whole image.
+	bool Resize(const Pixels& source, int width, int height, Pixels& pixels);
+
+	// Each pixel repeated factor times across and down. A factor below 1 is 1.
+	Pixels Enlarged(const Pixels& source, int factor);
 
 	// Empty when the pixels could not be encoded.
 	std::string Encode(const Pixels& pixels, Format format);
