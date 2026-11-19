@@ -3545,7 +3545,7 @@ namespace ImGui
     // Tables: Settings
     IMGUI_API void                  TableLoadSettings(ImGuiTable* table);
     IMGUI_API void                  TableLoadSettingsForColumns(ImGuiTable* table);
-    IMGUI_API void                  TableLoadSettingsForColumn(ImGuiTableColumn* column, ImGuiTableColumnSettings* column_settings, ImGuiTableFlags load_flags);
+    IMGUI_API void                  TableLoadSettingsForColumn(ImGuiTable* table, int column_n, ImGuiTableColumnSettings* column_settings, ImGuiTableFlags load_flags);
     IMGUI_API void                  TableSaveSettings(ImGuiTable* table);
     IMGUI_API void                  TableResetSettings(ImGuiTable* table);
     IMGUI_API ImGuiTableSettings*   TableGetBoundSettings(ImGuiTable* table);
