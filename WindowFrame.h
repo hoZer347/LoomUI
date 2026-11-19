@@ -68,6 +68,17 @@ namespace Loom
 		// names the drag strip and shows the resizing cursor. True when close is pressed.
 		bool DrawButtons(GLFWwindow* window, ImVec2 barMin, ImVec2 barMax, float stripLeft);
 
+		// DrawButtons across the main menu bar being built, after the last item drawn in it.
+		bool DrawButtonRow(GLFWwindow* window);
+
+		static constexpr int IconBaseSide = 24;
+
+		// The side of a window's big icon at a screen's dpi.
+		static int IconSide(unsigned dpi);
+
+		// Gives a native window (an HWND) the executable's GLFW_ICON resource, big at IconSide and small at the system's small size. Nothing off Windows.
+		static void SetIcon(void* nativeWindow);
+
 		// The edge or corner under the mouse, for the caller to show its
 		// resizing cursor, which Windows shows by itself.
 		Hit Hovered() const;

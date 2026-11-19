@@ -1,6 +1,7 @@
 #include "WindowFrame.h"
 
 #include "imgui.h"
+#include "imgui_internal.h"
 
 #include <GLFW/glfw3.h>
 
@@ -15,6 +16,8 @@
 #include <windows.h>
 #include <commctrl.h>
 #include <dwmapi.h>
+
+#include <map>
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "dwmapi.lib")
@@ -654,4 +657,73 @@ namespace Loom
 
 		return close;
 	};
+
+	bool WindowFrame::DrawButtonRow(GLFWwindow* const window)
+	{
+		const ImRect bar = ImGui::GetCurrentWindow()->MenuBarRect();
+
+		return DrawButtons(window, bar.Min, bar.Max, ImGui::GetItemRectMax().x);
+	};
+
+#ifdef _WIN32
+	namespace
+	{
+		constexpr const wchar_t* ICON_NAME = L"GLFW_ICON";
+
+		HICON LoadedIcon(const int side)
+		{
+			static std::map<int, HICON> loaded;
+			const auto found = loaded.find(side);
+
+			if (found != loaded.end())
+				return found->second;
+
+			const HICON icon = (HICON)LoadImageW(GetModuleHandleW(nullptr), ICON_NAME, IMAGE_ICON, side, side, LR_DEFAULTCOLOR);
+
+			if (icon != nullptr)
+				loaded.emplace(side, icon);
+
+			return icon;
+		};
+
+		void GiveIcon(
+			const HWND window,
+			const WPARAM kind,
+			const int side)
+		{
+			const HICON icon = LoadedIcon(side);
+
+			if (icon != nullptr)
+				SendMessageW(window, WM_SETICON, kind, (LPARAM)icon);
+		};
+	};
+
+	int WindowFrame::IconSide(const unsigned dpi)
+	{
+		return MulDiv(IconBaseSide, (int)dpi, USER_DEFAULT_SCREEN_DPI);
+	};
+
+	void WindowFrame::SetIcon(void* const nativeWindow)
+	{
+		const HWND window = (HWND)nativeWindow;
+		const unsigned dpi = GetDpiForWindow(window);
+
+		GiveIcon(window, ICON_BIG, IconSide(dpi));
+		GiveIcon(window, ICON_SMALL, GetSystemMetricsForDpi(SM_CXSMICON, dpi));
+	};
+#else
+	namespace
+	{
+		constexpr int DEFAULT_DPI = 96;
+	};
+
+	int WindowFrame::IconSide(const unsigned dpi)
+	{
+		return IconBaseSide * (int)dpi / DEFAULT_DPI;
+	};
+
+	void WindowFrame::SetIcon(void*)
+	{
+	};
+#endif
 };

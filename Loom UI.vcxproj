@@ -46,7 +46,7 @@
       <ConformanceMode>true</ConformanceMode>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory);$(MSBuildThisFileDirectory)ImGui;$(MSBuildThisFileDirectory)External\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory);$(MSBuildThisFileDirectory)ImGui;$(MSBuildThisFileDirectory)External\glfw\include;$(MSBuildThisFileDirectory)..\External Libraries\json\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -60,14 +60,32 @@
       <ConformanceMode>true</ConformanceMode>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
-      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory);$(MSBuildThisFileDirectory)ImGui;$(MSBuildThisFileDirectory)External\glfw\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(MSBuildThisFileDirectory);$(MSBuildThisFileDirectory)ImGui;$(MSBuildThisFileDirectory)External\glfw\include;$(MSBuildThisFileDirectory)..\External Libraries\json\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="App.h" />
+    <ClInclude Include="AppPacing.h" />
+    <ClInclude Include="AppSettings.h" />
+    <ClInclude Include="ChatInput.h" />
+    <ClInclude Include="ConsoleGuard.h" />
     <ClInclude Include="EditorIcons.h" />
     <ClInclude Include="EditorTheme.h" />
     <ClInclude Include="ExtensionRegistry.h" />
+    <ClInclude Include="Files.h" />
+    <ClInclude Include="Folders.h" />
+    <ClInclude Include="Http.h" />
+    <ClInclude Include="ImageCache.h" />
+    <ClInclude Include="Images.h" />
+    <ClInclude Include="KeyedStore.h" />
+    <ClInclude Include="LayoutIni.h" />
+    <ClInclude Include="LoomProcess.h" />
+    <ClInclude Include="Placement.h" />
     <ClInclude Include="TabWindows.h" />
+    <ClInclude Include="Text.h" />
+    <ClInclude Include="TextLayout.h" />
+    <ClInclude Include="TranscriptView.h" />
+    <ClInclude Include="Widgets.h" />
     <ClInclude Include="WindowFrame.h" />
     <ClInclude Include="ImGui\ImGuiAutoscroll.h" />
     <ClInclude Include="ImGui\ImGuiItemHooks.h" />
@@ -83,9 +101,25 @@
     <ClInclude Include="ImGui\imstb_truetype.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="App.cpp" />
+    <ClCompile Include="AppSettings.cpp" />
+    <ClCompile Include="ChatInput.cpp" />
+    <ClCompile Include="ConsoleGuard.cpp" />
     <ClCompile Include="EditorTheme.cpp" />
     <ClCompile Include="ExtensionRegistry.cpp" />
+    <ClCompile Include="Files.cpp" />
+    <ClCompile Include="Http.cpp" />
+    <ClCompile Include="ImageCache.cpp" />
+    <ClCompile Include="Images.cpp" />
+    <ClCompile Include="KeyedStore.cpp" />
+    <ClCompile Include="LayoutIni.cpp" />
+    <ClCompile Include="LoomProcess.cpp" />
+    <ClCompile Include="Placement.cpp" />
     <ClCompile Include="TabWindows.cpp" />
+    <ClCompile Include="Text.cpp" />
+    <ClCompile Include="TextLayout.cpp" />
+    <ClCompile Include="TranscriptView.cpp" />
+    <ClCompile Include="Widgets.cpp" />
     <ClCompile Include="WindowFrame.cpp" />
     <ClCompile Include="ImGui\ImGuiAutoscroll.cpp" />
     <ClCompile Include="ImGui\ImGuiItemHooks.cpp" />
