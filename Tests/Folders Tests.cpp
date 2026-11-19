@@ -2,11 +2,14 @@
 
 #include "AppSettings.h"
 
+#include <array>
 #include <filesystem>
 #include <fstream>
 #include <process.h>
 #include <string>
 #include <vector>
+
+#include <windows.h>
 
 using namespace Loom;
 
@@ -181,6 +184,40 @@ TEST_CASE("MigrateAppFolder does nothing without the old folder")
 	MigrateAppFolder(temp.path / "old", fresh);
 
 	CHECK_FALSE(std::filesystem::exists(fresh));
+}
+
+#pragma endregion
+
+#pragma region RepoRoot
+
+TEST_CASE("RepoRoot is the nearest folder above with a .git folder or file")
+{
+	const TempFolder temp;
+	const std::filesystem::path deep = std::filesystem::path(temp.Game()) / "Build" / "Release";
+	std::filesystem::create_directories(deep);
+	std::filesystem::create_directories(std::filesystem::path(temp.Game()) / ".git");
+	std::ofstream(std::filesystem::path(temp.Tools()) / ".git") << "gitdir: elsewhere";
+
+	CHECK(RepoRoot(deep) == std::filesystem::path(temp.Game()));
+	CHECK(RepoRoot(temp.Game()) == std::filesystem::path(temp.Game()));
+	CHECK(RepoRoot(temp.Tools()) == std::filesystem::path(temp.Tools()));
+}
+
+TEST_CASE("RepoRoot is nothing outside a repo and for nothing")
+{
+	const TempFolder temp;
+
+	CHECK_FALSE(RepoRoot(temp.path).has_value());
+	CHECK_FALSE(RepoRoot({ }).has_value());
+}
+
+TEST_CASE("ModuleFolder is the folder of the exe these tests run in, inside this repo")
+{
+	std::array<wchar_t, MAX_PATH> exe{ };
+	REQUIRE(GetModuleFileNameW(nullptr, exe.data(), (DWORD)exe.size()) != 0);
+
+	CHECK(ModuleFolder() == std::filesystem::path(exe.data()).parent_path());
+	CHECK(RepoRoot(ModuleFolder()).has_value());
 }
 
 #pragma endregion

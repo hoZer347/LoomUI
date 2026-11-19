@@ -69,6 +69,27 @@ namespace Loom
 		return std::string((const char*)text.data(), text.size());
 	};
 
+	// The nearest folder at or above inside that holds a .git entry.
+	inline std::optional<std::filesystem::path> RepoRoot(const std::filesystem::path& inside)
+	{
+		constexpr const char* git_entry = ".git";
+		std::error_code code;
+
+		for (std::filesystem::path folder = inside; !folder.empty(); folder = folder.parent_path())
+		{
+			if (std::filesystem::exists(folder / git_entry, code))
+				return folder;
+
+			if (folder == folder.parent_path())
+				break;
+		};
+
+		return std::nullopt;
+	};
+
+	// The folder of the exe or DLL this code is built into.
+	std::filesystem::path ModuleFolder();
+
 	inline std::optional<size_t> FindFolder(
 		const std::vector<std::string>& folders,
 		const std::string& folder)
